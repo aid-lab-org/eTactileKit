@@ -1,0 +1,166 @@
+{
+  "Execution": true,
+  "Simulation": true,
+  "Pattern_Data": [
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 500
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }]
+  ]
+}

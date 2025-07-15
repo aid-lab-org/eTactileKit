@@ -1,0 +1,106 @@
+{
+  "Execution": true,
+  "Simulation": true,
+  "Pattern_Data": [
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 150
+      },
+      "pattern": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 63,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 850
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 83,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 150
+      },
+      "pattern": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 86,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 850
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 106,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 150
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "params": {
+        "frequency": 109,
+        "stim_mode": 1
+      }
+    }]
+  ]
+}

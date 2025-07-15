@@ -1,0 +1,21 @@
+{
+    "MD033": {
+      "allowed_elements": [
+        "span",
+        "img",
+        "div",
+        "p",
+        "figcaption",
+        "video",
+        "source",
+        "iframe",
+        "center",
+        "strong",
+        "i",
+        "b",
+        "br"
+      ]
+    },
+
+    "MD013": false
+  }

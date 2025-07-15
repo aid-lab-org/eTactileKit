@@ -1,0 +1,323 @@
+/*= Style for mainwindow START
+  ==================================================== */
+	#MainWindow {
+		background-color: #ffffff;
+	}
+/*= END
+  ==================================================== */
+
+/*= Style for button to change menu style START
+  ==================================================== */
+	#change_btn {
+		padding: 5px;
+		border: none;
+		width: 30px;
+		height: 30px;
+	}
+/*= END
+  ==================================================== */
+
+/*= Style for header widget START
+  ==================================================== */
+	#widget {
+		background-color: #f9fafd;
+	}
+/*= END
+  ==================================================== */
+
+/*= Style for menu with icon only START
+  ==================================================== */
+  	/* style for widget */
+	#icon_only_widget {
+		background-color: #8494ab;
+		width:50px;
+	}
+
+    /* style for QPushButton and QLabel */
+	#icon_only_widget QPushButton, QLabel {
+		height:50px;
+		border:none;
+		/* border-bottom: 1px solid #b0b0b0; */
+	}
+
+	#icon_only_widget QPushButton:hover {
+		background-color: rgba( 86, 101, 115, 0.5);
+	}
+
+	/* style for logo image */
+	#logo_label_1 {
+		padding: 5px
+	}
+
+	#mode_button {
+		background-color: #a0bce3;
+	}
+	#mode_button:hover {
+		background-color: #3f72b9;
+	}
+/*= END
+  ==================================================== */
+
+/*= Style for menu with icon and text START
+  ==================================================== */
+	/* style for widget */
+	#full_menu_widget {
+		background-color: #8494ab;
+	}
+
+	/* style for QPushButton */
+	#full_menu_widget QPushButton {
+		border:none;
+		border-radius: 3px;
+		text-align: left;
+		padding: 8px 0 8px 15px;
+		color: #000000;
+	}
+
+	#full_menu_widget QPushButton:hover {
+		background-color: rgba( 86, 101, 115, 0.5);
+	}
+
+	#full_menu_widget QPushButton:checked {
+		color: #fff;
+	}
+
+	/* style for logo image */
+	#logo_label_2 {
+		padding: 5px;
+		color: #fff;
+	}
+
+	/* style for APP title */
+	#logo_label_3 {
+		padding-right: 10px;
+		color: #fff;
+	}
+/*= END
+  ==================================================== */
+  /*= Style for ThreeDEditor widget START
+==================================================== */
+/* Set the background color for the entire ThreeDEditor widget */
+#sidebar_widget_3d_editor {
+	background-color: #f7f7f7;
+}
+
+/* Set the font size and color for all QPushButton inside ThreeDEditor */
+#sidebar_widget_3d_editor QPushButton {
+	font-size:20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+	border: 1px solid #0056a3;  /* Darker blue border */
+	border-radius: 8px;  /* More rounded corners */
+	padding: 8px 16px;  /*Increase padding for a better look */
+}
+
+#sidebar_widget_3d_editor QPushButton:hover {
+	background-color: #c0c0c0;
+}
+
+#sidebar_widget_3d_editor:QSlider:handle:horizontal {
+	width: 20px;  /* Increase handle width */
+	height: 30px;  /* Increase handle height */
+	background: #0078d7;  /* Blue handle */
+	border: 2px solid #0056a3;  /* Darker blue border */
+	margin: -6px 0;  /* Center handle in groove */
+	border-radius: 10px;  /* Make handle circular */
+}
+
+#sidebar_widget_3d_editor QSlider::handle:horizontal:hover {
+	background: #0056a3;  /* Darker blue on hover */
+}
+
+#sidebar_widget_3d_editor QSlider::handle:horizontal:pressed {
+	background: #004080;  /* Even darker blue when pressed */
+}
+
+/* Set the font size and color for heading_electrodes label */
+#sidebar_widget_3d_editor #heading_electrodes {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-bottom: 30px;
+}
+
+/* Set the font size and color for heading_connector label */
+#sidebar_widget_3d_editor #heading_connector {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-top: 20;
+	padding-bottom: 30px;
+}
+
+#sidebar_widget_3d_editor #slider_label {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	padding-right: 10px;
+	padding-top: 50px;
+	color: #000000;
+}
+
+#sidebar_widget_3d_editor #slider_value_label {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	padding-right: 10px;
+	padding-top: 50px;
+	color: #000000;
+}
+
+#sidebar_widget_3d_editor #export_mesh_btn {
+	font-size: 28px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	padding-top: 50px;
+	padding-bottom: 50px;
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+}
+
+#sidebar_widget_3d_editor #export_mesh_btn:hover {
+	background-color: #c0c0c0;
+}
+/*= END
+==================================================== */
+
+/*= Style for menu with icon and text START
+==================================================== */
+/* Set the background color for the entire PCBD Editor widget */
+#sidebar_widget_pcb_editor {
+	background-color: #f7f7f7;
+}
+
+/* Set the font size and color for all QPushButton inside PCB Editor */
+#sidebar_widget_pcb_editor QPushButton {
+	font-size: 20px;  /*Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+	border: 1px solid #0056a3;  /* Darker blue border */
+	border-radius: 8px;  /* More rounded corners */
+	padding: 8px 16px;  /* Increase padding for a better look */
+}
+
+#sidebar_widget_pcb_editor QPushButton:hover {
+	background-color: #c0c0c0;
+}
+
+/* Set the font size and color for heading_electrodes label */
+#sidebar_widget_pcb_editor #heading_electrodes {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-bottom: 30px;
+}
+
+/* Set the font size and color for heading_connector label */
+#sidebar_widget_pcb_editor #heading_connector {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-top: 20;
+	padding-bottom: 30px;
+}
+
+#sidebar_widget_pcb_editor #generate_output_files_btn {
+	font-size: 28px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	padding-top: 50px;
+	padding-bottom: 50px;
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+}
+
+#sidebar_widget_pcb_editor #generate_output_files_btn:hover {
+	background-color: #c0c0c0;
+}
+/*= END
+==================================================== */
+
+  /*= Style for menu with icon and text START
+==================================================== */
+/* Set the background color for the entire LaserCutter widget */
+#sidebar_widget_laser_cut {
+	background-color: #f7f7f7;
+}
+
+/* Set the font size and color for all QPushButton inside ThreeDEditor */
+#sidebar_widget_laser_cut QPushButton {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+	border: 1px solid #0056a3;  /* Darker blue border */
+	border-radius: 8px;  /* More rounded corners */
+	padding: 8px 16px;  /* Increase padding for a better look */
+}
+
+#sidebar_widget_laser_cut QPushButton:hover {
+	background-color: #c0c0c0;
+}
+
+/* Set the font size and color for heading_electrodes label */
+#sidebar_widget_laser_cut #heading_electrodes {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-bottom: 30px;
+}
+
+/* Set the font size and color for heading_connector label */
+#sidebar_widget_laser_cut #heading_connector {
+	font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	padding-top: 20;
+	padding-bottom: 30px;
+}
+
+#sidebar_widget_laser_cut #generate_output_files_btn {
+	font-size: 28px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	padding-top: 50px;
+	padding-bottom: 50px;
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* Nicer blue background color */
+}
+
+#sidebar_widget_laser_cut #generate_output_files_btn:hover {
+	background-color: #c0c0c0;
+}
+/*= END
+==================================================== */
+
+  /*= Style for menu with icon and text START
+==================================================== */
+/* Set the background color for the entire Adjust Elements widget */
+#adjust_elements_dialog {
+	background-color: #f7f7f7;
+}
+
+/* Set the font size and color for all QPushButton inside ThreeDEditor */
+#adjust_elements_dialog QPushButton {
+	/*font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	background-color: #0078d7;  /* blue background color */
+	border: 1px solid #0056a3;  /* Darker blue border */
+	border-radius: 6px;  /* More rounded corners */
+	padding: 10px 6px;  /* Increase padding for a better look */
+}
+
+#adjust_elements_dialog QPushButton:hover {
+	background-color: #c0c0c0;
+}
+
+#adjust_elements_dialog QLabel {
+	/*font-size: 20px;  /* Increased font size */
+	font-weight: bold;  /* Bold text */
+	color: #000000;  /* White text color */
+	background-color: #f7f7f7;  /* Nicer blue background color */
+}
+
+/*= END
+==================================================== */

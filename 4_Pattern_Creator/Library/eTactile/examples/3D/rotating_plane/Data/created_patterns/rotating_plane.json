@@ -1,0 +1,546 @@
+{
+  "Execution": true,
+  "Simulation": true,
+  "Pattern_Data": [
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 250
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 100
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 300
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 250
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 150
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 200
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 250
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 750
+      },
+      "pattern": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 400
+      },
+      "pattern": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 550
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 100
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 300
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 250
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 150
+      },
+      "pattern": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 200
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 250
+      },
+      "pattern": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 750
+      },
+      "pattern": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 350
+      },
+      "pattern": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }],
+    [{
+      "delay": {
+        "OFF": 0,
+        "ON": 50
+      },
+      "pattern": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+    }]
+  ]
+}

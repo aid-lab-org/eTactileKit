@@ -1,0 +1,32 @@
+{ "Execution": true,
+  "Simulation": true,
+  "Frequency": 60,
+  "Pattern_Data": [
+       [{
+        "delay": {
+          "ON": 500,
+          "OFF": 0
+        },
+        "pattern": 
+          [1, 1, 1, 1, 1, 1, 1, 1],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }
+        }],
+        [{
+          "delay": {
+            "ON": 500,
+            "OFF": 0
+          },
+          "pattern": 
+            [0, 0, 0, 0, 0, 0, 0, 0],
+      "params": {
+        "frequency": 75,
+        "stim_mode": 1
+      }   
+          }]
+  ]
+}
+
+
