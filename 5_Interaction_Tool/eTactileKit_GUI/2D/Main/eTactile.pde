@@ -93,8 +93,8 @@ class ETactile{
       send_stimulation_polarity(1);
       send_sense_pulse_height(0);
       send_sense_pulse_width(0);
-      send_stimulation_pulse_height(0);
-      send_stimulation_pulse_width(50);
+      send_stimulation_pulse_height(100);
+      send_stimulation_pulse_width(100);
       send_channel_discharge_time(50);
       send_stimulation_frequency(75);
     }
@@ -206,7 +206,9 @@ class ETactile{
   
   void send_stimulation_pulse_height(int pulse_height){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_PULSE_HEIGHT);
-    mySerialComm.sendByte((byte)pulse_height);
+    //mySerialComm.sendByte((byte) (pulse_height));        // LSB
+    //mySerialComm.sendByte((byte) (pulse_height >> 8)); // MSB
+    mySerialComm.sendInt16(pulse_height);
     stimulation_pulse_height = pulse_height;
     
   }
@@ -214,7 +216,9 @@ class ETactile{
   
   void send_stimulation_pulse_width(int pulse_width){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_PULSE_WIDTH);
-    mySerialComm.sendByte((byte)pulse_width);
+    //mySerialComm.sendByte((byte) (pulse_width));        // LSB
+    //mySerialComm.sendByte((byte) (pulse_width >> 8)); // MSB
+    mySerialComm.sendInt16(pulse_width);
     stimulation_pulse_width = pulse_width;
     
   }
@@ -245,7 +249,7 @@ class ETactile{
   
   void send_stimulation_frequency(int stim_freq){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_FREQUENCY);
-    mySerialComm.sendByte((byte)stim_freq);
+    mySerialComm.sendInt16(stim_freq);
     stimulation_frequency = stim_freq;
     
   }

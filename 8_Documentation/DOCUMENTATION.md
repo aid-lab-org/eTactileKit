@@ -71,7 +71,7 @@ This documentation will guide you through the necessary steps and guidelines to 
 
 Follow the steps below:
 
-1. **Ensure that the Jumper `J3` as denoted [here](#4-hardware-design) is connected**
+1. **Ensure that the Jumper `J3` as denoted [here](#4-hardware-design) is connected (Not needed for the compact hardware setup)**
 
 2. **Connect the board to the computer via a UCB-C to USB-A cable**
 
@@ -89,6 +89,7 @@ Follow the steps below:
 
 ## 4. Hardware Design
 
+
 The hardware comprises of 2 main components:
 
 1. The main controller
@@ -97,6 +98,18 @@ The hardware comprises of 2 main components:
 The main controller is responsible for the high voltage generation, and a current controller, a microcontroller that handles commands and processes commands. The switching controllers can be stacked on the main controller. You can stack multiple switching controllers on top of each other for a higher number of electrode applications.
 
 The main controller board itself can be used standalone with its onboard electrodes. This can be used for initial testing and validation of hardware.
+
+## Compact Version
+
+<p align="center">
+  <img src="2_hardware/1_compact_pcb_view.png" alt="Image Description" width="1000" />
+  <p align="center"><i><b>PCB design of the main controller and the switching board and their stacked view</b></i></p>
+</p>
+
+In compact version, a single switching PCB supports upto 32 electrodes.
+
+
+## Easily solderable (Large form factor) version
 
 <p align="center">
   <img src="2_hardware/1_pcb_view.png" alt="Image Description" width="1000" />
@@ -121,6 +134,8 @@ For applications requiring more than 64 electrodes, multiple switching circuits 
 
 **!!You should not plug the jumper starting from stack 2!!**
 
+
+## Hardware architecture
 The hardware architecture of how the hardware functions is shown below. A more detailed explanation can be found in our paper.
 
 <p align="center">
@@ -131,6 +146,11 @@ The hardware architecture of how the hardware functions is shown below. A more d
 **Note: Current limiting**
 The `J2` jumper is used to limit the current. So, if you need the maximum current output, you can short circuit the `J2` jumper. 
 **If you need to limit the current, you can connect a current limiting diode to the `J2` jumper (`J2` is a female jumper.)**
+
+<p align="center">
+  <img src="2_hardware/J2_compact.png" alt="Image Description" width="800" />
+  <p align="center"><i><b> J2 jumper in compact Hardware setup </b></i></p>
+</p>
 
 ### 4.1 Ordering eTactileKit PCBs
 
@@ -1046,7 +1066,7 @@ which processing-java
 by default this should return `/usr/local/bin`. If this is not the case **copy the path** and do the following change in the `launchSketch` function in your current script(`eTactileKit_GUI.pde`).
 
 <p align="center">
-  <img src="4_processing_gui\path_correction_processing.png" alt="Image Description" width="600" />
+  <img src="4_processing_gui\Path_correction_processing.png" alt="Image Description" width="600" />
   <p align="center"><i><b>Locating and adding the processign-java path</b></i></p>
 </p>
 
@@ -1091,6 +1111,8 @@ After you click on the `2D MODE` button, the GUI for 2D pattern will appear. (**
 1. Select the `COM port` that belongs to your hardware.
 2. Select the JSON file that belongs to your electrode array. (**Make sure to navigate to the array directory**)
 
+**Note:** If you are using the onboard electrodes for any of your work, please use the JSON file `electrode_array_main_board.json` provided by us for the onboard electrodes. Do not use this JSON file for other customized 8-electrode boards.
+
 
 <p align="center">
   <img src="4_processing_gui\2D_file_selection_GUI.gif" alt="Image Description" width="600" />
@@ -1108,7 +1130,7 @@ After import necessery JSON files, click on the `CALIBRATION` button. This will 
   <p align="center"><i><b>2D Tactile calibration setup</b></i></p>
 </p>
 
-In this callibration setup, initially the `Amplitude` has setted to 0, and the `Pulse width` has setted to 50. When you increase the amplitude, you can feel a blinking pattern from the electrodes and in the GUI, the electrode color strted to change according to the amplitude level (Green to Red).
+In this callibration setup, initially the `Amplitude` has setted to 100, and the `Pulse width` has setted to 100. When you increase the amplitude, you can feel a blinking pattern from the electrodes and in the GUI, the electrode color strted to change according to the amplitude level (Green to Red).
 
 1. Increase the amplitude using `up arrow` key until you feel a slight tactile sensation. Then click on `SET AS LOWER THRESHOLD` button. This will update your lower thershold values in the GUI.
 
@@ -1180,6 +1202,8 @@ By clicking on `START` button, you can execute the program and the real time exe
   <img src="4_processing_gui\Execution.gif" alt="Image Description" width="600" />
   <p align="center"><i><b>2D pattern execution</b></i></p>
 </p>
+
+**Note:** You can quickly set the `amplitude` and `pulse width` to 100 by pressing the `space bar`.
 
 
 **Electrode feedback readings**

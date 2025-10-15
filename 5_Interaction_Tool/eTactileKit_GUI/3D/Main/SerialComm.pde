@@ -58,6 +58,27 @@ class SerialComm {
     }
   }
   
+    // Send a 16-bit integer as 2 bytes in little-endian format
+  public void sendInt16(int value) {
+      if (port != null) {
+          // Little-endian: send low byte first, then high byte
+          port.write((byte)(value & 0xFF));        // Low byte
+          port.write((byte)((value >> 8) & 0xFF)); // High byte
+      } else {
+          System.err.println("Serial port not initialized.");
+      }
+  }
+  
+      // Read 16-bit integer in little-endian format (2 bytes)
+    public int readInt16LittleEndian() {
+        if (port != null && port.available() >= 2) {
+            int lowByte = port.read() & 0xFF;   // Read low byte first
+            int highByte = port.read() & 0xFF;  // Read high byte second
+            return (highByte << 8) | lowByte;   // Combine bytes
+        }
+        return -1; // Return -1 if not enough data available
+    }
+  
   //send a byte array
   public void sendByteArray(byte[] pattern) {
     if (port != null) {

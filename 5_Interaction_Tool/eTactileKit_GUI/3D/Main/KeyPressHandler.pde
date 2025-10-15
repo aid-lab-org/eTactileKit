@@ -16,8 +16,8 @@ class KeyPressHandler {
 
   // Constructor
   KeyPressHandler() {
-    volume = 0;
-    width_ = 50;
+    volume = 100;
+    width_ = 100;
     polarity = 1;
   }
 
@@ -33,7 +33,7 @@ class KeyPressHandler {
         
         else{
         volume = volume + 1;
-        if(volume > 250)   volume = 250;
+        if(volume > 350)   volume = 350;
         eTactile.send_stimulation_pulse_height(volume);
         }
       } 
@@ -53,7 +53,7 @@ class KeyPressHandler {
         
         else{
           width_ = width_ + 1;
-          if(width_ > 250)   width_ = 250;
+          if(width_ > 350)   width_ = 350;
           eTactile.send_stimulation_pulse_width(width_);
           } 
       }
@@ -69,44 +69,48 @@ class KeyPressHandler {
     } 
     
     else if (key == ' '){
-      volume    = 0;
-      width_    = 50;
+      volume    = 100;
+      width_    = 100;
       polarity  = 1;
       eTactile.send_stimulation_pulse_height(volume);
       eTactile.send_stimulation_pulse_width(width_);
       eTactile.send_stimulation_polarity(1);
     } 
     
-    else if (key == 'l') {
-      volume = volume + 5;
-      if(volume > 250) volume = 250;
-      print("Volume: ",volume);
-    }
+  //  else if (key == 'l') {
+  //    volume = volume + 5;
+  //    if(volume > 250) volume = 250;
+  //    print("Volume: ",volume);
+  //  }
     
-    else if (key == 'k') {
-      volume = volume + 1;
-      if(volume > 250) volume = 250;
-      print("Volume: ",volume);
-    }
+  //  else if (key == 'k') {
+  //    volume = volume + 1;
+  //    if(volume > 250) volume = 250;
+  //    print("Volume: ",volume);
+  //  }
     
-    else if (key == 'j') {
-      volume = volume - 1;
-      if(volume <0) volume = 0;
-      print("Volume: ",volume);
-    }
+  //  else if (key == 'j') {
+  //    volume = volume - 1;
+  //    if(volume <0) volume = 0;
+  //    print("Volume: ",volume);
+  //  }
     
-    else if (key == 'h') {
-      volume = volume - 5;
-      if(volume <0) volume = 0;
-      print("Volume: ",volume);
-    }
+  //  else if (key == 'h') {
+  //    volume = volume - 5;
+  //    if(volume <0) volume = 0;
+  //    print("Volume: ",volume);
+  //  }
     
-    else if (key == 'a') {
-      polarity = 1;
-    }
+  //  else if (key == 'a') {
+  //    polarity = 1;
+  //  }
     
-    else if (key == 'c') {
-      polarity = 0;
+  //  else if (key == 'c') {
+  //    polarity = 0;
+  //  }
+  
+  else{
+    return;
     }
   }
 

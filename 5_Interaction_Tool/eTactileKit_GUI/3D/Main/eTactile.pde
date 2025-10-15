@@ -14,7 +14,7 @@ class ETactile{
   private final int PC_ESP32_CHANNEL_DISCHARGE_TIME      =0xF7; //Discharge time for the channel
   private final int PC_ESP32_STIMULATION_FREQUENCY       =0xF6; //Frequency of the stimulation
   private final int PC_ESP32_HV513_NUM_REQUEST           =0xF5; //Request to get the number of HV513 modules used
-  private final int ESP32_PC_RECEIVE_FINISHED            =0xAA; //Indicates that the ESP32 has received the data from the PC
+  //private final int ESP32_PC_RECEIVE_FINISHED            =0xAA; //Indicates that the ESP32 has received the data from the PC
   
   int     number_of_electrodes;
   int     stimulation_pulse_height;
@@ -233,7 +233,7 @@ class ETactile{
   
   void send_stimulation_pulse_height(int pulse_height){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_PULSE_HEIGHT);
-    mySerialComm.sendByte((byte)pulse_height);
+    mySerialComm.sendInt16(pulse_height);
     stimulation_pulse_height = pulse_height;
     
   }
@@ -241,7 +241,7 @@ class ETactile{
   
   void send_stimulation_pulse_width(int pulse_width){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_PULSE_WIDTH);
-    mySerialComm.sendByte((byte)pulse_width);
+    mySerialComm.sendInt16(pulse_width);
     stimulation_pulse_width = pulse_width;
     
   }
@@ -272,7 +272,7 @@ class ETactile{
   
   void send_stimulation_frequency(int stim_freq){
     mySerialComm.sendByte((byte)PC_ESP32_STIMULATION_FREQUENCY);
-    mySerialComm.sendByte((byte)stim_freq);
+    mySerialComm.sendInt16(stim_freq);
     stimulation_frequency = stim_freq;
     
   }

@@ -33,7 +33,18 @@ class LoadData {
       //coordinates          = json_array_data.getJSONArray("outline");
       electrodes           = json_array_data.getJSONArray("electrodes");
       electrodeRadius      = json_array_data.getFloat("electrode_radius");
+      
       electrodes_number    = electrodes.size();
+      on_board = false;
+      
+      // Check if "board" exists and equals "on_board"
+      if (json_array_data.hasKey("board")) {
+        String boardType = json_array_data.getString("board");
+        if (boardType.equals("on_board")) {
+          electrodes_number = 32;
+          on_board = true;
+        }
+      }
       
     
       // Load Mapping_func array from the JSON file

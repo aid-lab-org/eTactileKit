@@ -132,7 +132,7 @@ class ETactileKit:
             bool: True if the command was successfully acknowledged by the ESP32, False otherwise.
         """
         self.comm.write_serial_bytes(PC_ESP32_STIMULATION_PULSE_HEIGHT)
-        sent = self.comm.write_serial_bytes(pulse_height)
+        sent = self.comm.write_serial_bytes(pulse_height, 2, 'little') # write in little endian format
         self.stimulation_pulse_height = pulse_height
         
 
@@ -147,7 +147,7 @@ class ETactileKit:
             bool: True if the command was successfully acknowledged by the ESP32, False otherwise.
         """
         self.comm.write_serial_bytes(PC_ESP32_STIMULATION_PULSE_WIDTH)
-        sent = self.comm.write_serial_bytes(pulse_width)
+        sent = self.comm.write_serial_bytes(pulse_width, 2, 'little')
         self.stimulation_pulse_width = pulse_width # Update the current pulse width
 
 
@@ -207,7 +207,7 @@ class ETactileKit:
             bool: True if the command was successfully acknowledged by the ESP32, False otherwise.
         """
         self.comm.write_serial_bytes(PC_ESP32_STIMULATION_FREQUENCY)
-        sent = self.comm.write_serial_bytes(stim_freq)
+        sent = self.comm.write_serial_bytes(stim_freq, 2, 'little') #write in little endian format
         self.stimulation_frequency = stim_freq
 
 
@@ -245,10 +245,13 @@ class ETactileKit:
         self.comm.write_serial_bytes(PC_ESP32_MEASURE_REQUEST)
         temp_voltages = []
         for i in range(self.number_of_electrodes):
-            received_data = self.comm.read_serial_bytes()  # Read the voltage data and allocate more time since the reading is averaged over multiple readings internally
+            received_data = self.comm.read_serial_bytes(len=2, byteorder='little')  # Read the voltage data
             temp_voltages.append(received_data)
 
         self.voltages = [temp_voltages[self.electrode_mapping[i]] for i in range(self.number_of_electrodes)]
+        
+        # Clear the input buffer to avoid any stale data
+        self.comm.clear_serial_input_buffer()
         return self.voltages
 
     def update_and_get_hv513_count(self):
@@ -259,8 +262,11 @@ class ETactileKit:
             int: The number of HV513 driver chips connected to the ESP32.
         """
         self.comm.write_serial_bytes(PC_ESP32_HV513_NUM_REQUEST)
-        received_data = self.comm.read_serial_bytes_with_timeout()  # Read the count of HV513s and might need more time since the reading is averaged over multiple readings internally
+        received_data = self.comm.read_serial_bytes_with_timeout(len=1, timeout = 0.05)  # Read the count of HV513s and might need more time since the reading is averaged over multiple readings internally
         self.hv513_num = received_data
+
+        # Clear the input buffer to avoid any stale data
+        self.comm.clear_serial_input_buffer()
         return received_data
 
     #-------------------------------------------------------------------------------------------------------------#

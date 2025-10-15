@@ -17,8 +17,6 @@
 #define PC_ESP32_CHANNEL_DISCHARGE_TIME          0xF7 //Discharge time for the channel
 #define PC_ESP32_STIMULATION_FREQUENCY           0xF6 //Frequency of the stimulation
 #define PC_ESP32_HV513_NUM_REQUEST               0xF5 //Request to get the number of HV513 modules used
-
-// #define ESP32_PC_RECEIVE_FINISHED                0xAA //Indicates that the command has been received properly
 /************************************************************************* */
 
 /************************************************************************* */
@@ -32,13 +30,22 @@ void initCommunication(int baudRate);
 int  isDataAvailable();
 
 /************************************************************************* */
-/*Write Byte                                                               */
+/*Write Byte values                                                        */
 /************************************************************************* */
-void writeByte(uint8_t byte);
+///Write 8-bit value
+void writeInt_8(byte val);
+
+///Write 16-bit value with low byte first
+void writeInt_16(uint16_t val);
 
 /************************************************************************* */
-/*Read Byte                                                                */
+/*Read Byte values                                                         */
 /************************************************************************* */
-unsigned char readByte();
+///Read 8-bit value
+byte readInt_8();
 
-#endif //COMMUNICATiON_H
+///Read 16-bit value with low byte first
+uint16_t readInt_16();
+/************************************************************************* */
+
+#endif //COMMUNICATION_H

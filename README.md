@@ -10,15 +10,17 @@ Electro-tactile interfaces are becoming increasingly popular due to their unique
 
 More information about the toolkit can be found in our [paper](https://doi.org/10.1145/3746059.3747796). If you use this work, please cite our paper:
 
-```bibtex
-@inproceedings{eTactileKit,
-Will be added upon available in ACM DL
-}
+```
+Praneeth Bimsara Perera, Ravindu Madhushan Pushpakumara, Hiroyuki Kajimoto, Arata Jingu, Jürgen Steimle,
+and Anusha Withana. 2025. eTactileKit: A Toolkit for Design Exploration and Rapid Prototyping of
+Electro-Tactile Interfaces. In The 38th Annual ACM Symposium on User Interface Software and Technology (UIST ’25),
+September 28–October 01, 2025, Busan, Republic of Korea. ACM, New York, NY, USA, 17 pages.
+https://doi.org/10.1145/3746059.3747796
 ```
 
 ## Contributors
 
-**[Praneeth Perera](https://www.github.com/PraneethPerera99), [Ravindu Madhushan](https://www.github.com/RavinduMPK), [Hiroyuki Kajimoto](https://kaji-lab.jp/en/index.php?people/kaji), [Arata Jingu](https://hci.cs.uni-saarland.de/people/arata-jingu/), [Jürgen Steimle](https://hci.cs.uni-saarland.de/people/juergen-steimle/), [Anusha Withana](https://www.github.com/wdanusha)**
+**[Praneeth Perera](https://www.github.com/PraneethPerera99), [Ravindu Pushpakumara](https://www.github.com/RavinduMPK), [Hiroyuki Kajimoto](https://kaji-lab.jp/en/index.php?people/kaji), [Arata Jingu](https://hci.cs.uni-saarland.de/people/arata-jingu/), [Jürgen Steimle](https://hci.cs.uni-saarland.de/people/juergen-steimle/), [Anusha Withana](https://www.github.com/wdanusha)**
 
 ## Documentation
 
@@ -38,4 +40,4 @@ This work is licensed under a
 [cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg
 
 ## Contact
-If you have any issues with eTactileKit, please contact [PraneethPerera99](https://www.github.com/Praneeth Perera)
+If you have any issues with eTactileKit, please contact [Praneeth Perera](https://www.github.com/PraneethPerera99) or [Ravindu Pushpakumara](https://www.github.com/RavinduMPK)

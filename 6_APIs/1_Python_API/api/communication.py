@@ -50,9 +50,9 @@ class Communication:
                 self.serial_port.reset_output_buffer()
                 return True
     
-    def read_serial_bytes_with_timeout(self, timeout=0.005):
+    def read_serial_bytes_with_timeout(self, len, timeout=0.010):
         """
-        Read a single byte from the serial port using a temporary timeout setting.
+        Read the specified number of bytes.
 
         Args:
             timeout (float, optional): The temporary read timeout for this read operation.
@@ -64,11 +64,11 @@ class Communication:
         """
         received_data = None
         self.serial_port.timeout = timeout
-        received_data = int.from_bytes(self.serial_port.read(1), byteorder='big')
+        received_data = int.from_bytes(self.serial_port.read(len), byteorder='little')
         self.serial_port.timeout = self.timeout #reset the timeout
         return received_data
     
-    def read_serial_bytes(self,len=1):
+    def read_serial_bytes(self, len=1, byteorder='little'):
         """
         Read a specified number of bytes from the serial port.
 
@@ -79,7 +79,7 @@ class Communication:
             int: Integer representation of the bytes read, or None if no data is received.
         """
         received_data = None
-        received_data = int.from_bytes(self.serial_port.read(len), byteorder='big')
+        received_data = int.from_bytes(self.serial_port.read(len), byteorder=byteorder)
         return received_data
 
     def read_serial_string(self):
@@ -92,15 +92,15 @@ class Communication:
         received_data = None
         received_data = self.serial_port.readline().decode('utf-8').strip()
         return received_data
-    
-    def write_serial_bytes(self, command):
+
+    def write_serial_bytes(self, val, num_bytes=1, byteorder='little'):
         """
-        Write a single-byte command to the serial port.
+        Write a the given number of bytes in the specified order.
 
         Args:
-            command (int): The integer value representing the byte to be sent.
+            val (int): The integer value representing the byte to be sent.
         """
-        self.serial_port.write(bytes([command]))
+        self.serial_port.write(int.to_bytes(val, num_bytes, byteorder))
 
     def clear_serial_input_buffer(self):
         """

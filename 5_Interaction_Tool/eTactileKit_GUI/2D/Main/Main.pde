@@ -53,6 +53,8 @@ boolean override = false;
 boolean pattern_selected = false;
 boolean general_check = false;
 
+boolean on_board = false;
+
 void settings() {
   graphicsManager = new GraphicsManager();
   graphicsManager.setupGraphics();

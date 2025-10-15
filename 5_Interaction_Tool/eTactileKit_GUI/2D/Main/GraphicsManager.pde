@@ -61,21 +61,43 @@ class GraphicsManager {
       electrodePositions[i][0] = x;
       electrodePositions[i][1] = y;
       
-      if (eTactile.switch_state[i] == 1){
-        if (eTactile.voltages[i] <= 60 + eTactile.stimulation_pulse_height && eTactile.voltages[i] >= 20 && disp_elecs_values){
-          stroke(0,255,0);
-        } else{
-          noStroke();
+      
+      if(on_board){
+        if (eTactile.switch_state[i+24] == 1){
+          if (eTactile.voltages[i] <= 60 + eTactile.stimulation_pulse_height && eTactile.voltages[i] >= 20 && disp_elecs_values){
+            stroke(0,255,0);
+          } else{
+            noStroke();
+          }
+          fill(255,0,0);
         }
-        fill(255,0,0);
-      }
+        else{
+          if (eTactile.voltages[i] <= 80 && eTactile.voltages[i] >= 20 && disp_elecs_values){
+            stroke(0,255,0);
+          } else{
+            noStroke();
+          }
+          fill(0,0,255);
+        }
+    }
+      
       else{
-        if (eTactile.voltages[i] <= 80 && eTactile.voltages[i] >= 20 && disp_elecs_values){
-          stroke(0,255,0);
-        } else{
-          noStroke();
+          if (eTactile.switch_state[i] == 1){
+            if (eTactile.voltages[i] <= 60 + eTactile.stimulation_pulse_height && eTactile.voltages[i] >= 20 && disp_elecs_values){
+              stroke(0,255,0);
+            } else{
+              noStroke();
+            }
+            fill(255,0,0);
+          }
+        else{
+          if (eTactile.voltages[i] <= 80 && eTactile.voltages[i] >= 20 && disp_elecs_values){
+            stroke(0,255,0);
+          } else{
+            noStroke();
+          }
+          fill(0,0,255);
         }
-        fill(0,0,255);
       }
       
       
@@ -177,16 +199,16 @@ class GraphicsManager {
   void visualizeAndExecute(){
     textSize(20);
     fill(255);
-    int amplitude = keyHandler.getVolume();
-    int width_    = keyHandler.getWidth();
+    int amplitude = eTactile.stimulation_pulse_height;
+    int width_    = eTactile.stimulation_pulse_width;
     text("Amplitude: " + amplitude, 20, WINDOW_SIZE_Y - 60);
     text("Pulse Width: " + width_, 20, WINDOW_SIZE_Y - 30);
   }
   
   //If execution: true & simulation: false
   void executeOnly(){
-    int amplitude = keyHandler.getVolume();
-    int width_    = keyHandler.getWidth();
+    int amplitude = eTactile.stimulation_pulse_height;
+    int width_    = eTactile.stimulation_pulse_width;
     textSize(40);
     fill(255);
     text("No Visualization. Execution Only.", 5 * WINDOW_SIZE_X / 32, WINDOW_SIZE_Y / 2);
@@ -217,8 +239,8 @@ class GraphicsManager {
   
   //Visual indicator of the pules height and pulse width
   void showPulse(){
-    int amplitude  = keyHandler.volume; //eTactile.amplitude;
-    int width_     = keyHandler.width_; //eTactile.width_;
+    int amplitude  = eTactile.stimulation_pulse_height; //eTactile.amplitude;
+    int width_     = eTactile.stimulation_pulse_width; //eTactile.width_;
     int h,w;
     noFill();
     stroke(0,255,0);
@@ -248,8 +270,8 @@ class GraphicsManager {
   }
   
   void showCalibratingPulse(){
-    int amplitude  = keyHandler.volume;
-    int width_     = keyHandler.width_;
+    int amplitude  = eTactile.stimulation_pulse_height;
+    int width_     = eTactile.stimulation_pulse_width;
     int h,w;
     noFill();
     stroke(0,255,0);

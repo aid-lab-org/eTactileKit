@@ -24,23 +24,33 @@ class LoadData {
 
 
 
-  public void loadArray(String array_file) {
+ public void loadArray(String array_file) {
     try {
       json_array_data      = loadJSONObject(array_file);
       coordinates          = json_array_data.getJSONArray("outline");
       electrodes           = json_array_data.getJSONArray("electrodes");
       electrodeRadius      = json_array_data.getFloat("electrode_radius") * 2;
-      electrodes_number    = electrodes.size();
-      
-      //sortElectrodesByNumber();
-    
+  
+      // Default: use actual electrode count
+      electrodes_number = electrodes.size();
+      on_board = false;
+  
+      // Check if "board" exists and equals "on_board"
+      if (json_array_data.hasKey("board")) {
+        String boardType = json_array_data.getString("board");
+        if (boardType.equals("on_board")) {
+          electrodes_number = 32;
+          on_board = true;
+        }
+      }
+  
       // Load Mapping_func array from the JSON file
       JSONArray mapping_array = json_array_data.getJSONArray("Mapping_func");
-      
       mapping_func = new int[mapping_array.size()];
       for (int i = 0; i < mapping_array.size(); i++) {
         mapping_func[i] = mapping_array.getInt(i);
       }   
+  
     } catch (Exception e) {
       valid_files_array = false;
       println("Error loading JSON data: " + e);
