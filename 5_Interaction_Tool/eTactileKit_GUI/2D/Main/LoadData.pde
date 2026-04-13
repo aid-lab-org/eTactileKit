@@ -39,7 +39,6 @@ class LoadData {
       if (json_array_data.hasKey("board")) {
         String boardType = json_array_data.getString("board");
         if (boardType.equals("on_board")) {
-          electrodes_number = 32;
           on_board = true;
         }
       }
@@ -67,7 +66,10 @@ class LoadData {
       
       general_check = true;
      
-      if (patterns.getJSONArray(0).getJSONObject(0).getJSONArray("pattern").size() != electrodes_number && patterns.getJSONArray(patterns.size()).getJSONObject(0).getJSONArray("pattern").size() != electrodes_number ){
+      if (!on_board && patterns.getJSONArray(0).getJSONObject(0).getJSONArray("pattern").size() != electrodes_number && patterns.getJSONArray(patterns.size()).getJSONObject(0).getJSONArray("pattern").size() != electrodes_number ){
+        println("Electrode number missmatch!");
+      }
+      else if (on_board && patterns.getJSONArray(0).getJSONObject(0).getJSONArray("pattern").size() != 8 && patterns.getJSONArray(patterns.size()).getJSONObject(0).getJSONArray("pattern").size() != 8){
         println("Electrode number missmatch!");
       }
     

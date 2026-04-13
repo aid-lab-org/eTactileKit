@@ -63,7 +63,7 @@ class GraphicsManager {
       
       
       if(on_board){
-        if (eTactile.switch_state[i+24] == 1){
+        if (eTactile.switch_state[i+ (eTactile.hv513_num - 1)*8] == 1){
           if (eTactile.voltages[i] <= 60 + eTactile.stimulation_pulse_height && eTactile.voltages[i] >= 20 && disp_elecs_values){
             stroke(0,255,0);
           } else{

@@ -1,0 +1,13 @@
+Output: NC Drill Files
+Type  : NC Drill
+From  : Project [Switching_Circuit.PrjPcb]
+   Generated File[switch_board-RoundHoles-Plated.TXT]
+   Generated File[switch_board-SlotHoles-Plated.TXT]
+   Generated File[switch_board.LDP]
+   Generated File[switch_board.DRR]
+
+
+Files Generated   : 4
+Documents Printed : 0
+
+Finished Output Generation At 10:43:37 PM On 11/8/2025

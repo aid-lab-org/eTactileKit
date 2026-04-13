@@ -57,11 +57,19 @@ class ETactile{
     //Initialize Serial Communication if the execution is true in JSON pattern data
     if (DEBUG != 0 && !serialIntialized) {
       mySerialComm   = new SerialComm(parent, COM_PORT);
+      update_and_get_hv513_count();
       serialIntialized = true;
     }
 
     try{
     //Load Electrodes number and the Mapping function
+    
+    if (on_board){
+      if (COM_PORT == null) {
+          hv513_num = 1;
+      }
+      dataLoader.electrodes_number = hv513_num * 8;
+    }
     number_of_electrodes   = dataLoader.electrodes_number;
     electrode_mapping      = dataLoader.mapping_func;
     
@@ -77,14 +85,6 @@ class ETactile{
     } catch (Exception e) {
       valid_files_array = false;
     }
-  
-    frameRate(60);
-    
-    graphicsManager.displayInstructions();
-    println("Instructions displayed");
-    electrodeSwitch.resetElectrodes(switch_state);
-    println("Electrodes reseted");
-
     
     //Setting the parameters for the stimulation
     if (DEBUG != 0 && selectedCOMPort != null) {
@@ -98,6 +98,31 @@ class ETactile{
       send_channel_discharge_time(50);
       send_stimulation_frequency(75);
     }
+    
+    if (on_board){
+      int targetLength = hv513_num * 8;
+      //int numbersToAdd = targetLength - 8;
+      
+      int[] newArr = new int[targetLength];
+      
+      for (int i = 0; i < targetLength; i++){
+        newArr[i] = i;
+      }
+      
+      dataLoader.mapping_func = newArr;
+    }
+  
+    frameRate(60);
+    
+    graphicsManager.displayInstructions();
+    println("Instructions displayed");
+    electrodeSwitch.resetElectrodes(switch_state);
+    println("Electrodes reseted");
+
+    
+    
+    
+    
     println("eTactileKit initiated");
   }
   
@@ -121,6 +146,28 @@ class ETactile{
     JSONObject  params_object   = pattern_object.getJSONObject("params");
     int         frequency       = params_object.getInt("frequency");
     int         stim_mode       = params_object.getInt("stim_mode");
+    
+     if (on_board) {
+      int targetLength = hv513_num * 8;
+      int numbersToAdd = targetLength - 8;
+  
+      // ✅ Create a new JSONArray
+      JSONArray newArr1 = new JSONArray();
+  
+      // Add padding numbers (1, 2, 3, ..., numbersToAdd)
+      for (int i = 0; i < numbersToAdd; i++) {
+        newArr1.append(i + 1);
+      }
+  
+      // Append pattern_data elements
+      for (int i = 0; i < 8; i++) {
+        newArr1.append(pattern_data.getInt(i));
+      }
+  
+      pattern_data = newArr1;
+  }
+    
+    
     
   
     electrodeSwitch.updateSwitchState(switch_state, pattern_data, delay_on, delay_off, deactivate_flag);
@@ -288,13 +335,13 @@ class ETactile{
       for (int ch = 0; ch < number_of_electrodes; ch++) {
         voltages[ch] = Record[ch];
       }   
-  }
-  
+  }  
   
   int update_and_get_hv513_count(){
     mySerialComm.sendByte((byte)PC_ESP32_HV513_NUM_REQUEST);
     int received_data = mySerialComm.readByteWithTimeout(0.010);
     hv513_num = received_data;
+    println("HV513 Count is: ", hv513_num);
     return received_data;
   }
   

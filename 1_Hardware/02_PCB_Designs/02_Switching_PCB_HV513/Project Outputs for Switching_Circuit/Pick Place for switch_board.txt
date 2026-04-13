@@ -1,0 +1,24 @@
+Altium Designer Pick and Place Locations
+E:\Intern\24-ETactileKit-Hardware\05_Compact_PCB_Designs\02_Switching_PCB_rv1\Project Outputs for Switching_Circuit\Pick Place for switch_board.txt
+
+========================================================================================================================
+File Design Information:
+
+Date:       25/08/25
+Time:       20:25
+Revision:   c3a5e448d19ea20e36197451483b3ce8b4969f5e
+Variant:    No variations
+Units used: mm
+
+Designator Comment            Layer       Footprint    Center-X(mm) Center-Y(mm) Rotation Description Manufacturer_Name Manufacturer_Part_Number "Mouser Part Number" 
+J6         53647-0274         BottomLayer 536470274    40.5180      18.5010      270      Connector   Molex             53647-0274               538-53647-0274       
+J5         53647-0274         BottomLayer 536470274    13.5940      18.5010      270      Connector   Molex             53647-0274               538-53647-0274       
+J3         52885-0274         TopLayer    528850274    13.5940      18.5010      270      Connector   Molex             52885-0274               538-52885-0274       
+J4         52885-0274         TopLayer    528850274    40.5180      18.5010      270      Connector   Molex             52885-0274               538-52885-0274       
+U4         HV513-QFN          TopLayer    HV513-QFN    32.8971      23.0829      180      ""          ""                ""                       ""                   
+U3         HV513-QFN          BottomLayer HV513-QFN    27.1469      23.1021      0        ""          ""                ""                       ""                   
+U2         HV513-QFN          TopLayer    HV513-QFN    20.8693      23.0705      180      ""          ""                ""                       ""                   
+U1         HV513-QFN          BottomLayer HV513-QFN    5.5158       23.0705      0        ""          ""                ""                       ""                   
+R1         MCT06030C6042FP500 BottomLayer RESC1608X55N 7.3711       15.0564      0        Resistor    Vishay            MCT06030C6042FP500       ""                   
+J2         FH12-16S-1SH_55_   TopLayer    FH1216S1SH55 33.4007      31.0312      0        Connector   Hirose            FH12-16S-1SH(55)         798-FH12-16S-1SH55   
+J1         FH12-16S-1SH_55_   TopLayer    FH1216S1SH55 11.8107      31.0312      0        Connector   Hirose            FH12-16S-1SH(55)         798-FH12-16S-1SH55   

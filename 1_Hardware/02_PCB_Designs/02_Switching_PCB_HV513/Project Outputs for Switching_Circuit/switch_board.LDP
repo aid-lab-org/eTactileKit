@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: E:\UOM\Academic\CV\Sydney\ET tool kit\1. GitHub\Hardware\24-ETactileKit-Hardware\05_Compact_PCB_Designs\02_Switching_PCB_rv1\switch_board.PcbDoc
+LayersSetName=Top_Bot_Plated_Thru_Holes|DrillFile=switch_board-roundholes-plated.txt|DrillLayers=gtl,gbl
+LayersSetName=Top_Bot_Plated_Slot_Holes|DrillFile=switch_board-slotholes-plated.txt|DrillLayers=gtl,gbl

@@ -1,0 +1,20 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: PCB_main_single_side_STACK.PcbDoc   11/12/2025  1:06:14 PM
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII Plated RoundHoles File : PCB_main_single_side_STACK-Plated.TXT
+ASCII Non-Plated RoundHoles File : PCB_main_single_side_STACK-NonPlated.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      12mil (0.3mm)                                             Round             90        PTH        13.32inch (338.44mm)
+T2      30mil (0.762mm)                                           Round             2         PTH        0.09inch (2.16mm)
+T3      32mil (0.8mm)                                             Round             2         PTH        0.08inch (1.90mm)
+T4      33mil (0.85mm)                                            Round             14        PTH        2.30inch (58.42mm)
+T5      79mil (2mm)                                               Round             4         PTH        5.43inch (137.98mm)
+T6      37mil (0.95mm)                                            Round             4         NPTH       1.77inch (44.96mm)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              116
+
+Total Processing Time (hh:mm:ss) : 00:00:00

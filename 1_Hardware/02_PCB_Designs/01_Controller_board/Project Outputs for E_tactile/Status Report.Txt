@@ -1,0 +1,10 @@
+Output: Generates pick and place files
+Type  : Pick Place
+From  : Variant [[No Variations]] of Project [E_tactile.PrjPcb]
+   Generated File[Pick Place for PCB_main_single_side_STACK.csv]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 1:13:15 PM On 11/12/2025
