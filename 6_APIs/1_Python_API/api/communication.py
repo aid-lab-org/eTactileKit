@@ -1,405 +1,238 @@
 #-------------------------------------------------------------------------------
-# BLE Communication Class
-#-------------------------------------------------------------------------------
-import asyncio
-import struct
-from bleak import BleakClient, BleakScanner
-from asyncio import Queue
-import time
-
-# UUIDs
-SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-RX_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E" # Write to this (Send to ESP)
-TX_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E" # Subscribe to this (Read from ESP)
-
-
-class CommunicationBLE:
-    """
-    A class to manage ble communication.
-    """
-    def __init__(self, device_name="eTactileKit_BLE"):
-        """
-        Initialize the Communication object with serial port parameters.
-        
-        Args:
-            device_name (str): The name of the BLE device to connect to. Defaults to "eTactileKit_BLE".
-        """
-        self.device_name = device_name
-        self.client = None
-        self.rx_buffer = Queue()
-        self.connected = False
-
-    async def connect(self):
-        """
-        Attempt to establish a BLE connection to the device.
-        Returns:
-            bool: True once the BLE connection is successfully established.
-        """
-
-        print(f"Scanning for {self.device_name}...")
-        device = await BleakScanner.find_device_by_name(self.device_name)
-
-        if not device:
-            print("Device not found.")
-            return False
-
-        self.client = BleakClient(device)
-        await self.client.connect()
-        self.connected = self.client.is_connected
-        print(f"Connected: {self.connected}")
-
-        # Start receiving data
-        await self.client.start_notify(TX_UUID, self.notification_handler)
-        return True
-    
-    async def disconnect(self):
-        if self.client:
-            await self.client.stop_notify(TX_UUID)
-            await self.client.disconnect()
-            print("Disconnected")
-    
-    # Callback when data arrives from ESP32
-    def notification_handler(self, sender, data):
-        # Add bytes to the thread-safe queue
-        for byte in data:
-            self.rx_buffer.put_nowait(byte)
-
-    # --- Read Functions ---
-    async def read_bytes_with_timeout(self, num_bytes=1, timeout=0.010, byteorder='little'):
-        """
-        Read a specified number of bytes from the BLE buffer with timeout.
-
-        Args:
-            num_bytes (int, optional): The number of bytes to read. Defaults to 1.
-            timeout (float, optional): The read timeout in seconds. Defaults to 0.010.
-            byteorder (str): The byte order ('little' or 'big'). Defaults to 'little'.
-
-        Returns:
-            int: Integer representation of the bytes read. Returns None if timeout occurs.
-        """
-        try:
-            received_data = 0
-            for i in range(num_bytes):
-                byte = await asyncio.wait_for(self.rx_buffer.get(), timeout=timeout)
-                if byteorder == 'little':
-                    received_data |= (byte << (8 * i))
-                else:
-                    received_data |= (byte << (8 * (num_bytes - 1 - i)))
-            return received_data
-        except asyncio.TimeoutError:
-            return None
-    
-    async def read_bytes(self, num_bytes=1, byteorder='little'):
-        """
-        Read a specified number of bytes from the BLE buffer.
-
-        Args:
-            num_bytes (int, optional): The number of bytes to read. Defaults to 1.
-            byteorder (str): The byte order ('little' or 'big'). Defaults to 'little'.
-
-        Returns:
-            int: Integer representation of the bytes read.
-        """
-        received_data = 0
-        for i in range(num_bytes):
-            byte = await self.rx_buffer.get_nowait()
-            if byteorder == 'little':
-                received_data |= (byte << (8 * i))
-            else:
-                received_data |= (byte << (8 * (num_bytes - 1 - i)))
-        return received_data
-    
-    # --- Write Functions ---
-    async def write_bytes(self, val, num_bytes=1, byteorder='little'):
-        """
-        Write the given number of bytes in the specified order via BLE.
-
-        Args:
-            val (int): The integer value representing the bytes to be sent.
-            num_bytes (int): The number of bytes to write. Defaults to 1.
-            byteorder (str): The byte order ('little' or 'big'). Defaults to 'little'.
-        """
-        if not self.connected: return
-        data = struct.pack(f'<{"B" * num_bytes}' if byteorder == 'little' else f'>{"B" * num_bytes}', *[val >> (8*i) & 0xFF for i in range(num_bytes)])
-        await self.client.write_gatt_char(RX_UUID, data, response=False)
-
-    def isDataAvailable(self):
-        return self.rx_buffer.qsize()
-    
-    def clear_input_buffer(self):
-        """
-        Clear the input buffer of BLE.
-        """
-
-        self.rx_buffer = Queue()
-
-
-#-------------------------------------------------------------------------------
 # Serial Communication Class
 #-------------------------------------------------------------------------------
 import serial
 import time
 
 class CommunicationSerial:
-    """
-    A class to manage serial communication using the pySerial library.
-    """
-    def __init__(self, port_name, baudrate, timeout=0.02):
-        """
-        Initialize the Communication object with serial port parameters.
+    """Manages serial communication with the eTactileKit ESP32."""
+    # The ESP32-S3 USB-Serial-JTAG RX ISR drops bytes when its 64-byte hardware FIFO is not
+    # serviced quickly enough - which happens when bytes arrive faster than the firmware reads
+    # them Sending in small chunks with a brief gap keeps the FIFO from overflowing,
+    # so every command lands intact.
+    _SERIAL_CHUNK = 8       # max bytes per USB write
+    _SERIAL_GAP_S = 0.003   # pause after each chunk (also spaces consecutive commands)
 
-        Args:
-            port_name (str): The name of the serial port (e.g., 'COM3' on Windows, '/dev/ttyUSB0' on Linux).
-            baudrate (int): The communication speed in baud.
-            timeout (float, optional): The default timeout for serial read operations. Defaults to 0.02.
-        """
+    def __init__(self, port_name, baudrate, timeout=0.02):
         self.port_name = port_name
         self.baudrate = baudrate
         self.timeout = timeout
         self.serial_port = None
+        self.connected = False
 
     def connect(self):
         """
-        Attempt to establish a connection to the serial port.
-
-        This method continuously tries to connect to the specified serial port. 
-        If it cannot connect for more than 2 seconds at a time, 
-        it will print a warning message and then keep trying.
+        Continuously attempts to open the serial port until successful.
 
         Returns:
-            bool: True once the serial connection is successfully established.
+            bool: True once the connection is established.
         """
         prev = time.time()
-        SETUP = False
-        while(not SETUP):
+        while not self.connected:
             try:
-                self.serial_port = serial.Serial(
-                    self.port_name,
-                    self.baudrate,
-                    timeout = self.timeout)
-            except:
-                if(time.time()-prev > 2):
-                    print("No serial detected. Please check your connections")
-                    prev = time.time()
-            if(self.serial_port is not None):
-                SETUP = True    
-                print(f"Connected to Serial device at {self.port_name} with {self.baudrate} baud rate")
+                self.serial_port = serial.Serial(self.port_name, self.baudrate, timeout=self.timeout)
+                self.connected = True
+                print(f"Connected to serial device at {self.port_name} ({self.baudrate} baud)")
                 self.serial_port.reset_input_buffer()
                 self.serial_port.reset_output_buffer()
-    
+                return True
+            except Exception:
+                if time.time() - prev > 2:
+                    print("No serial device detected. Check connections.")
+                    prev = time.time()
+        return True
+
     def disconnect(self):
-        """
-        Close the serial connection and release the resources.
-        """
-        self.serial_port.close()
+        if self.serial_port and self.serial_port.is_open:
+            self.serial_port.close()
         self.serial_port = None
+        self.connected = False
         print("Serial port disconnected")
 
-    def read_bytes_with_timeout(self, num_bytes = 1, byteorder='little', timeout=0.010):
-        """
-        Read the specified number of bytes.
+    def read_raw_bytes(self, num_bytes, timeout=None):
+        """Read exactly num_bytes and return raw bytes (no integer conversion)."""
+        if timeout is not None:
+            self.serial_port.timeout = timeout
+        raw = self.serial_port.read(num_bytes)
+        if timeout is not None:
+            self.serial_port.timeout = self.timeout
+        return raw
 
-        Args:
-            timeout (float, optional): The temporary read timeout for this read operation.
-                Defaults to 0.005.
-
-        Returns:
-            int: Integer representation of the single byte read. If no data is received 
-            within the given timeout, the result may be None or 0 (depending on the OS).
-        """
-        received_data = None
+    def read_bytes_with_timeout(self, num_bytes=1, byteorder='little', timeout=0.010):
         self.serial_port.timeout = timeout
-        received_data = int.from_bytes(self.serial_port.read(num_bytes), byteorder=byteorder)
-        self.serial_port.timeout = self.timeout #reset the timeout
-        return received_data
-    
+        raw = self.serial_port.read(num_bytes)
+        self.serial_port.timeout = self.timeout
+        return int.from_bytes(raw, byteorder=byteorder)
+
     def read_bytes(self, num_bytes=1, byteorder='little'):
-        """
-        Read a specified number of bytes from the serial port.
-
-        Args:
-            length (int, optional): The number of bytes to read. Defaults to 1.
-
-        Returns:
-            int: Integer representation of the bytes read, or None if no data is received.
-        """
-        received_data = None
-        received_data = int.from_bytes(self.serial_port.read(num_bytes), byteorder=byteorder)
-        return received_data
+        raw = self.serial_port.read(num_bytes)
+        return int.from_bytes(raw, byteorder=byteorder)
 
     def read_string(self):
-        """
-        Read a line from the serial port as a UTF-8 encoded string, stripping trailing whitespace.
-
-        Returns:
-            str: The UTF-8 decoded string read from the serial port.
-        """
-        received_data = None
-        received_data = self.serial_port.readline().decode('utf-8').strip()
-        return received_data
+        return self.serial_port.readline().decode('utf-8').strip()
 
     def write_bytes(self, val, num_bytes=1, byteorder='little'):
-        """
-        Write a the given number of bytes in the specified order.
-
-        Args:
-            val (int): The integer value representing the byte to be sent.
-        """
         self.serial_port.write(int.to_bytes(val, num_bytes, byteorder))
         return True
 
+    def write_byte_array(self, data):
+        """Send bytes in small paced chunks so the ESP32-S3 USB-Serial-JTAG RX FIFO never
+        overflows (see _SERIAL_CHUNK / _SERIAL_GAP_S). Safe for any payload size."""
+        for i in range(0, len(data), self._SERIAL_CHUNK):
+            self.serial_port.write(data[i:i + self._SERIAL_CHUNK])
+            time.sleep(self._SERIAL_GAP_S)
+
     def clear_input_buffer(self):
-        """
-        Clear the input buffer of the serial port.
-        """
         self.serial_port.reset_input_buffer()
-    
+
     def clear_output_buffer(self):
-        """
-        Clear the output buffer of the serial port.
-        """
         self.serial_port.reset_output_buffer()
 
+
 #-------------------------------------------------------------------------------
-# WIFI Communication Class
+# WiFi Communication Class
 #-------------------------------------------------------------------------------
 import socket
-import struct
 import time
 
 class CommunicationWiFi:
-    """
-    A class to manage serial communication using the pySerial library.
-    """
-    def __init__(self, ip, port, timeout=0.02):
-        """
-        Initialize the Communication object with serial port parameters.
+    """Manages TCP/IP communication with the eTactileKit ESP32."""
 
-        Args:
-            port_name (str): The name of the serial port (e.g., 'COM3' on Windows, '/dev/ttyUSB0' on Linux).
-            baudrate (int): The communication speed in baud.
-            timeout (float, optional): The default timeout for serial read operations. Defaults to 0.02.
-        """
+    def __init__(self, ip, port, timeout=0.02):
         self.ip = ip
         self.port = port
-        self.sock = None
         self.timeout = timeout
+        self.sock = None
         self.connected = False
-        # Internal buffer to store partial packets received from TCP
-        # self.rx_buffer = bytearray()
 
     def connect(self):
         """
-        Attempt to establish a connection to the WiFi device.
-
-        This method continuously tries to connect to the specified WiFi device. 
-        If it cannot connect for more than 2 seconds at a time, 
-        it will print a warning message and then keep trying.
+        Opens a TCP connection to the ESP32.
 
         Returns:
-            bool: True once the serial connection is successfully established.
+            bool: True if the connection succeeds, False otherwise.
         """
+        sock = None
         try:
             print(f"Connecting to {self.ip}:{self.port}...")
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.settimeout(5) # 5 second timeout for connection
-            self.sock.connect((self.ip, self.port))
-            self.sock.settimeout(self.timeout) # Remove timeout for blocking operations (or keep it if you prefer)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((self.ip, self.port))
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            sock.settimeout(self.timeout)
+            self.sock = sock
             self.connected = True
-            self.sock
-            print("Connected via WiFi!")
+            print(f"Connected to {self.ip}:{self.port}")
             return True
         except Exception as e:
-            print(f"Connection Failed: {e}")
+            print(f"Connection failed: {e}")
+            if sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
             self.connected = False
             return False
-    
-    def disconnect(self):
-        """
-        Close the serial connection and release the resources.
-        """
-        if self.sock:
-            self.sock.close()
-        self.connected = False
-        print("WiFi connection disconnected")
-    
-    # def _fill_buffer(self, required_bytes):
-    #     """
-    #     Reads from socket until rx_buffer has enough data.
-    #     Returns True if successful, False if connection broke.
-    #     """
-    #     while len(self.rx_buffer) < required_bytes:
-    #         try:
-    #             # Receive up to 1024 bytes
-    #             chunk = self.sock.recv(1024)
-    #             if not chunk: 
-    #                 # Empty bytes means the server closed the connection
-    #                 self.connected = False
-    #                 return False
-    #             self.rx_buffer.extend(chunk)
-    #         except socket.error as e:
-    #             print(f"Socket Error: {e}")
-    #             self.connected = False
-    #             return False
-    #     return True
-    
-    def read_bytes_with_timeout(self, num_bytes = 1, byteorder='little', timeout=0.010):
-        """
-        Read the specified number of bytes.
 
-        Args:
-            timeout (float, optional): The temporary read timeout for this read operation.
-                Defaults to 0.005.
+    def disconnect(self):
+        if self.sock:
+            try:
+                self.sock.close()
+            except Exception:
+                pass
+            self.sock = None
+        self.connected = False
+        print("WiFi disconnected")
+
+    def _recv_exact(self, num_bytes, timeout):
+        """
+        Reads exactly num_bytes from the socket within the given timeout.
+
+        TCP recv() may return fewer bytes than requested. This method
+        accumulates chunks until the full count arrives or time runs out.
 
         Returns:
-            int: Integer representation of the single byte read. If no data is received 
-            within the given timeout, the result may be None or 0 (depending on the OS).
+            bytes: The received data (may be shorter than num_bytes on timeout).
         """
-        received_data = None
-        self.sock.settimeout(timeout)
-        received_data = int.from_bytes(self.sock.recv(num_bytes), byteorder=byteorder)
-        self.sock.settimeout(self.timeout) #reset the timeout
-        return received_data
-    
+        data = bytearray()
+        deadline = time.monotonic() + timeout
+        while len(data) < num_bytes:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            self.sock.settimeout(max(remaining, 0.001))
+            try:
+                chunk = self.sock.recv(num_bytes - len(data))
+                if not chunk:
+                    self.connected = False
+                    break
+                data.extend(chunk)
+            except (socket.timeout, TimeoutError):
+                break
+            except socket.error as e:
+                print(f"Socket error: {e}")
+                self.connected = False
+                break
+        self.sock.settimeout(self.timeout)
+        return bytes(data)
+
+    def read_raw_bytes(self, num_bytes, timeout=0.010):
+        """Read exactly num_bytes and return raw bytes (no integer conversion)."""
+        return self._recv_exact(num_bytes, timeout)
+
+    def read_bytes_with_timeout(self, num_bytes=1, byteorder='little', timeout=0.010):
+        """
+        Read exactly num_bytes within the given timeout.
+
+        Returns:
+            int: The received value, or 0 on timeout/error.
+        """
+        raw = self._recv_exact(num_bytes, timeout)
+        if len(raw) < num_bytes:
+            return 0
+        return int.from_bytes(raw, byteorder=byteorder)
+
     def read_bytes(self, num_bytes=1, byteorder='little'):
         """
-        Read a specified number of bytes from the serial port.
-
-        Args:
-            length (int, optional): The number of bytes to read. Defaults to 1.
+        Read exactly num_bytes using the default timeout.
 
         Returns:
-            int: Integer representation of the bytes read, or None if no data is received.
+            int: The received value.
         """
-        received_data = None
-        received_data = int.from_bytes(self.sock.recv(num_bytes), byteorder=byteorder)
-        return received_data
+        raw = self._recv_exact(num_bytes, self.timeout)
+        return int.from_bytes(raw, byteorder=byteorder)
 
     def write_bytes(self, val, num_bytes=1, byteorder='little'):
         """
-        Write a the given number of bytes in the specified order.
-
-        Args:
-            val (int): The integer value representing the byte to be sent.
+        Send val as num_bytes over the TCP socket.
         """
-        if not self.connected: return
+        if not self.connected:
+            return
         try:
             self.sock.sendall(int.to_bytes(val, num_bytes, byteorder))
         except socket.error as e:
-            print(f"Socket Error on send: {e}")
+            print(f"Socket error on send: {e}")
+            self.connected = False
+
+    def write_byte_array(self, data):
+        """Send a pre-built bytes/bytearray in a single sendall call."""
+        if not self.connected:
+            return
+        try:
+            self.sock.sendall(data)
+        except socket.error as e:
+            print(f"Socket error on send: {e}")
             self.connected = False
 
     def clear_input_buffer(self):
-        """
-        Clear the input buffer of the serial port.
-        """
+        """Drain any pending bytes from the socket receive buffer."""
+        self.sock.settimeout(0)
         try:
-            self.sock.setblocking(False)
-            while True:
-                self.sock.recv(4096)
-        except BlockingIOError:
+            while self.sock.recv(4096):
+                pass
+        except (BlockingIOError, socket.timeout):
+            pass
+        except socket.error:
             pass
         finally:
-            self.sock.setblocking(True)
-        pass
-    
+            self.sock.settimeout(self.timeout)

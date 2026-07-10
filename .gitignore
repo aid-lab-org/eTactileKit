@@ -33,3 +33,5 @@
 .DS_Store
 /4_DesignTool_Software/3_FabricationTool_App/src/utils/__pycache__
 5_APIs/1_Python_API/api/__pycache__/
+6_APIs/1_Python_API/__pycache__/
+6_APIs/1_Python_API/api/__pycache__/
