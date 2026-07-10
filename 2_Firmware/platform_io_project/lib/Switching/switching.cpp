@@ -14,7 +14,7 @@ void initSwitching() {
     stackSense(); // Detect the number of stacked switching boards and initialize the HV513 outputs
 }
 
-void hv513FastScan(int usWhichPin) {
+void IRAM_ATTR hv513FastScan(int usWhichPin) {
     int ii, pin;
     static int pos;
     //Load S/R
@@ -36,7 +36,7 @@ void hv513FastScan(int usWhichPin) {
     gpio_fast_on(HV513_LE); // Set LE high to latch the data
 }
 
-void hv513Clear(int hv513_num) {
+void IRAM_ATTR hv513Clear(int hv513_num) {
     hv513FastScan(HV513_PIN_NUM * hv513_num);
 }
 
@@ -95,10 +95,6 @@ short stackSense() {
   else {
     HV513Num = 0; // Default value for out-of-range cases
   }
-  hv513Init(HV513Num); //turnoff all the HV513-outputs when the number of boards is detected
-  return HV513Num;
-#elif defined(KAJI_LAB_BOARD)
-  HV513Num = 8;
   hv513Init(HV513Num); //turnoff all the HV513-outputs when the number of boards is detected
   return HV513Num;
 #else

@@ -1,0 +1,95 @@
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
+
+#include <Arduino.h>
+
+/************************************************************************* */
+/*Board definitions - Uncomment for correct board configuration            */
+/************************************************************************* */
+// #define ETACTILEKIT_BOARD
+#define ETACTILEKIT_COMPACT_BOARD
+
+/************************************************************************* */
+/*Communication Type Used - Uncomment correct type                         */
+/************************************************************************* */
+#define SERIAL_COMMUNICATION
+// #define WIFI_COMMUNICATION
+// #define BLE_COMMUNICATION
+
+
+/************************************************************************* */
+/*Pin Assignment for the board used                                        */
+/************************************************************************* */
+#define SCLK                                     7 //GPIO7
+#define MISO                                     8 //GPIO8
+#define MOSI                                     9 //GPIO9
+#define DA_CS                                   44 //GPIO44
+#define AD_CS                                   43 //GPIO43
+#define HV513_BL                                 1 //GPIO1
+#define HV513_LE                                 2 //GPIO2
+#define HV513_POL                                3 //GPIO3
+#define HV513_CLK                                4 //GPIO4
+#define HV513_DIN                                5 //GPIO5
+
+#if defined(ETACTILEKIT_BOARD)|| defined(ETACTILEKIT_COMPACT_BOARD)
+#define STACK_SENSE                              6 //GPIO6
+#endif
+
+/************************************************************************* */
+/*Communication variables                                                  */
+/************************************************************************* */
+#if defined(SERIAL_COMMUNICATION)
+#define BAUD_RATE 921600       //Baud rate for serial communication
+#endif
+
+#if defined(WIFI_COMMUNICATION)
+/************************************************************************* */
+/*Connect to external WiFi network (Station Mode)                          */
+/*Each board derives a unique 6-hex ID from its MAC at boot and advertises */
+/*as <MDNS_HOSTNAME>-<ID>.local (e.g. etactilekit-A1B2C3.local), so many   */
+/*kits can share one network without hostname/IP collisions.               */
+/************************************************************************* */
+#define WIFI_STA_SSID           "YOUR_WIFI_SSID"
+#define WIFI_STA_PASS           "YOUR_WIFI_PASSWORD"
+#define WIFI_STA_TIMEOUT_MS     5000       // Max ms to wait for STA connection
+#define MDNS_HOSTNAME           "etactilekit" // Base host; real host is etactilekit-<ID>.local
+
+/************************************************************************* */
+/*Make your eTactileKit a Router (Access Point)                            */
+/*STA-failure fallback. The AP SSID is also made unique per board:         */
+/*<WIFI_AP_SSID_PREFIX><ID> (e.g. eTactileKit_A1B2C3). Clients connect to  */
+/*the fixed AP IP 192.168.4.1.                                             */
+/************************************************************************* */
+#define WIFI_AP_SSID_PREFIX     "eTactileKit_" // Unique AP SSID is eTactileKit_<ID>
+#define WIFI_AP_PASS            "etactile@al"
+#define SERVER_PORT             8080           // TCP control port (all modes)
+
+/************************************************************************* */
+/*UDP broadcast discovery                                                  */
+/*Clients broadcast DISCOVERY_PROBE to DISCOVERY_PORT; each  */
+/*board replies with a "<PREFIX>;id=..;ip=..;port=..;mode=.." line so kits   */
+/*are found by unique ID without relying on mDNS (which Unity cannot resolve)*/
+/************************************************************************* */
+#define DISCOVERY_PORT          8888           // UDP port the board listens on for probes
+#define DISCOVERY_PROBE         "ETK?"         // Datagram a client broadcasts to find kits
+#define DISCOVERY_REPLY_PREFIX  "ETK!"         // Prefix of the board's unicast reply line
+
+#endif
+
+
+/************************************************************************* */
+/*Global variables                                                         */
+/************************************************************************* */
+#define MAX_ELECTRODE_NUM 256  //Maximum Number of electrodes supported by the board
+
+static inline void gpio_fast_on (int pin)  {
+    if (pin < 32) { GPIO.out_w1ts = 1U << pin; }       // 0-31
+    else          { GPIO.out1_w1ts.val = 1U << (pin-32); }
+}
+
+static inline void gpio_fast_off(int pin)  {
+    if (pin < 32) { GPIO.out_w1tc = 1U << pin; }
+    else          { GPIO.out1_w1tc.val = 1U << (pin-32); }
+}
+
+#endif //CONFIGURATION_H

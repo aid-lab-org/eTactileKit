@@ -2,6 +2,179 @@
 
 bool deviceConnected = false;
 
+#if defined(SERIAL_COMMUNICATION)
+
+void initCommunication() {
+  // Default RX buffer is 256 B; the parser waits for a full payload before
+  // reading, and the largest payload (stim pattern at MAX_ELECTRODE_NUM) is
+  // 512 B. Must be set before Serial.begin().
+  Serial.setRxBufferSize(1024);
+  Serial.begin(BAUD_RATE);
+  deviceConnected = true;
+}
+
+void writeInt_8(byte val) {
+  if (!deviceConnected) return;
+  Serial.write(val);
+}
+
+void writeInt_16(uint16_t val) {
+  if (!deviceConnected) return;
+  byte arr[2] = { (byte)(val & 0xFF), (byte)((val >> 8) & 0xFF) };
+  Serial.write(arr, 2);   // Send the array of bytes in the little-endian order
+}
+
+void writeBytes(const byte* data, size_t len) {
+  if (!deviceConnected) return;
+  Serial.write(data, len);
+}
+
+byte readInt_8() {
+  return Serial.read();
+}
+
+uint16_t readInt_16() {
+  byte arr[2];
+  Serial.read(arr, 2); // Read two bytes into the array
+  return (uint16_t)(arr[0] | (arr[1] << 8)); // Combine the two bytes into a single uint16_t
+}
+
+
+int isDataAvailable() {
+  return Serial.available();
+}
+#endif
+
+#if defined(WIFI_COMMUNICATION)
+WiFiServer server(SERVER_PORT);
+WiFiClient client;
+bool wifiSTAMode = false;
+AsyncUDP discoveryUdp;
+char deviceId[7] = {0};
+
+// Register the mDNS host + service under a per-board unique name so multiple kits
+// coexist. Kept as a helper because both STA and AP paths advertise identically.
+static void startMdns(const String& hostname) {
+  if (MDNS.begin(hostname.c_str())) {
+    MDNS.setInstanceName(String("eTactileKit ") + deviceId);
+    MDNS.addService("etactilekit", "tcp", SERVER_PORT);
+    MDNS.addServiceTxt("etactilekit", "tcp", "id", (const char*)deviceId); // browsable by unique ID
+  }
+}
+
+// Listen for UDP discovery probes and reply (unicast) with this board's identity + IP.
+// The onPacket callback runs on the async network task (Core 0), so it adds no work to
+// runEtactileKit() and cannot delay the stimulation ISR. It only fires when a probe arrives.
+static void startDiscoveryResponder() {
+  if (discoveryUdp.listen(DISCOVERY_PORT)) {
+    discoveryUdp.onPacket([](AsyncUDPPacket &packet) {
+      // Only answer genuine probes; ignore anything else that lands on this port.
+      if (packet.length() >= 4 && memcmp(packet.data(), DISCOVERY_PROBE, 4) == 0) {
+        IPAddress ip = wifiSTAMode ? WiFi.localIP() : WiFi.softAPIP();
+        // ;-separated key=value line, parsed identically by the Python and Unity clients.
+        packet.printf("%s;id=%s;name=%s-%s;ip=%s;port=%d;mode=%s;fw=1.0",
+                      DISCOVERY_REPLY_PREFIX, deviceId,
+                      MDNS_HOSTNAME, deviceId,
+                      ip.toString().c_str(), SERVER_PORT,
+                      wifiSTAMode ? "STA" : "AP");
+      }
+    });
+  }
+}
+
+void initCommunication() {
+  // Derive a stable, unique 6-hex ID from the factory eFuse MAC. It is constant across
+  // reboots and independent of STA/AP mode, and drives the hostname, AP SSID and the
+  // discovery reply so several kits on one network never collide.
+  uint32_t idNum = (uint32_t)(ESP.getEfuseMac() & 0xFFFFFF);
+  snprintf(deviceId, sizeof(deviceId), "%06X", idNum);
+  String hostname = String(MDNS_HOSTNAME) + "-" + deviceId; // etactilekit-A1B2C3
+
+  // --- Attempt Station mode first (DHCP, no static IP) ---
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(hostname.c_str());
+  WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASS);
+
+  wl_status_t result = (wl_status_t)WiFi.waitForConnectResult(WIFI_STA_TIMEOUT_MS);
+
+  if (result == WL_CONNECTED) {
+    wifiSTAMode = true;
+    startMdns(hostname); // reachable as etactilekit-<ID>.local
+  } else {
+    // --- Fallback to Access Point mode with a unique per-board SSID ---
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_AP);
+    String apSsid = String(WIFI_AP_SSID_PREFIX) + deviceId; // eTactileKit_A1B2C3
+    WiFi.softAP(apSsid.c_str(), WIFI_AP_PASS);
+    wifiSTAMode = false;
+    startMdns(hostname);
+  }
+
+  // UDP discovery responder (event-driven; no main-loop or ISR cost)
+  startDiscoveryResponder();
+
+  // TCP server starts regardless of mode
+  server.begin();
+  server.setNoDelay(true);
+}
+
+// Helper: Maintains the client object
+void checkClientConnection() {
+  if (!client || !client.connected()) {
+    deviceConnected = false;
+    // Try to accept a new client
+    WiFiClient newClient = server.available();
+    if (newClient) {
+      client = newClient;
+      client.setNoDelay(true); // Disable for lower latency
+      deviceConnected = true;
+    }
+  }
+}
+
+void writeInt_8(byte val) {
+  checkClientConnection();
+  if (!deviceConnected) return;
+  client.write(val);
+}
+
+void writeInt_16(uint16_t val) {
+  checkClientConnection();
+  if (!deviceConnected) return;
+  // Send Little Endian (Low byte first)
+  byte arr[2] = { (byte)(val & 0xFF), (byte)((val >> 8) & 0xFF) };
+  client.write(arr, 2);
+}
+
+byte readInt_8() {
+  if (!deviceConnected) return 0;
+  return client.read();
+}
+
+uint16_t readInt_16() {
+  if (!deviceConnected) return 0;
+  // We need at least 2 bytes. This should be called after confirming data is available.
+  byte low = client.read();
+  byte high = client.read();
+  return (uint16_t)(low | (high << 8));
+}
+
+void writeBytes(const byte* data, size_t len) {
+  checkClientConnection();
+  if (!deviceConnected) return;
+  client.write(data, len);
+}
+
+int isDataAvailable() {
+  checkClientConnection();
+  if (client && client.connected()) {
+    return client.available(); // Return number of bytes available to read
+  }
+  return 0;
+}
+
+#endif
+
 #if defined(BLE_COMMUNICATION)
 BLEServer* pServer = NULL;
 BLECharacteristic* pTxCharacteristic = NULL;
@@ -93,112 +266,13 @@ uint16_t readInt_16() {
   return (uint16_t)(low | (high << 8));
 }
 
+void writeBytes(const byte* data, size_t len) {
+  if (!deviceConnected) return;
+  pTxCharacteristic->setValue((uint8_t*)data, len);
+  pTxCharacteristic->notify();
+}
+
 int isDataAvailable() {
   return bleRxBuffer.available();
 }
-#endif
-
-#if defined(SERIAL_COMMUNICATION)
-
-void initCommunication() {
-  Serial.begin(BAUD_RATE);
-  deviceConnected = true;
-}
-
-void writeInt_8(byte val) {
-  if (!deviceConnected) return;
-  Serial.write(val);
-}
-
-void writeInt_16(uint16_t val) {
-  if (!deviceConnected) return;
-  byte arr[2] = { (byte)(val & 0xFF), (byte)((val >> 8) & 0xFF) };
-  Serial.write(arr, 2);   // Send the array of bytes in the little-endian order
-}
-
-byte readInt_8() {
-  return Serial.read();
-}
-
-uint16_t readInt_16() {
-  byte arr[2];
-  Serial.read(arr, 2); // Read two bytes into the array
-  return (uint16_t)(arr[0] | (arr[1] << 8)); // Combine the two bytes into a single uint16_t
-}
-
-int isDataAvailable() {
-  return Serial.available();
-}
-#endif
-
-#if defined(WIFI_COMMUNICATION)
-WiFiServer server(SERVER_PORT);
-WiFiClient client;
-
-void initCommunication() {
-  // 1. Set up the ESP32 as an Access Point
-  WiFi.softAP(WIFI_SSID, WIFI_PASS);
-
-  // 2. Start the TCP Server
-  server.begin();
-
-}
-
-// Helper: Maintains the client object
-void checkClientConnection() {
-  if (!client || !client.connected()) {
-    deviceConnected = false;
-    // Try to accept a new client
-    WiFiClient newClient = server.available();
-    if (newClient) {
-      client = newClient;
-      deviceConnected = true;
-    }
-  }
-}
-
-void writeInt_8(byte val) {
-  checkClientConnection();
-  if (client && client.connected()) {
-    client.write(val);
-  }
-}
-
-void writeInt_16(uint16_t val) {
-  checkClientConnection();
-  if (client && client.connected()) {
-    // Send Little Endian (Low byte first)
-    byte arr[2] = { (byte)(val & 0xFF), (byte)((val >> 8) & 0xFF) };
-    client.write(arr, 2);
-  }
-}
-
-byte readInt_8() {
-  checkClientConnection();
-  if (client && client.available() > 0) {
-    return client.read();
-  }
-  return 0;
-}
-
-uint16_t readInt_16() {
-  checkClientConnection();
-  // We need at least 2 bytes. 
-  // In a blocking scenario, we might wait, but here we check availability.
-  if (client && client.available() >= 2) {
-    byte low = client.read();
-    byte high = client.read();
-    return (uint16_t)(low | (high << 8));
-  }
-  return 0; 
-}
-
-int isDataAvailable() {
-  checkClientConnection();
-  if (client && client.connected()) {
-    return client.available();
-  }
-  return 0;
-}
-
 #endif

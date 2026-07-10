@@ -19,12 +19,12 @@ void initSwitching();
 /*  hv513FastScan(0);                                                         */
 /*  See manual for detail of this function.                                   */
 /******************************************************************************/
-void hv513FastScan(int usWhichPin);
+void IRAM_ATTR hv513FastScan(int usWhichPin);
 
 /******************************************************************************/
 /*  HV513 Clear                                                               */
 /******************************************************************************/
-void hv513Clear(int hv513_num);
+void IRAM_ATTR hv513Clear(int hv513_num);
 
 /******************************************************************************/
 /* HV513 init                                                                 */

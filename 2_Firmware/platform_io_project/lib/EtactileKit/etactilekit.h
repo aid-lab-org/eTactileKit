@@ -7,23 +7,32 @@
 #include "adc_dac.h"
 #include "communication.h"
 
-extern unsigned char stim_pattern[MAX_ELECTRODE_NUM];
-extern unsigned int voltage[MAX_ELECTRODE_NUM];
+extern volatile uint16_t stim_pattern[MAX_ELECTRODE_NUM];
+extern volatile byte voltage[MAX_ELECTRODE_NUM * 2];
 
 // extern TaskHandle_t th[1]; //Task handle for stimulation task - https://www.circuitstate.com/tutorials/how-to-write-parallel-multitasking-applications-for-esp32-using-freertos-arduino/
 
 extern hw_timer_t *Timer0_Cfg; // Handle for the delays
 extern hw_timer_t *Timer1_Cfg; // Handle for the stimulation timer
+extern hw_timer_t *Timer2_Cfg; // Handle for the hardware timer for communication
 
-extern int   Polarity;                // 1:anodic, 0:cathodic
-extern int   PulseHeight;             // Pulse height of the stimulation
-extern int   PulseWidth;              // Pulse width of the stimulation
-extern int   SensePulseHeight;        // Pulse height to measure the impedance
-extern int   SensePulseWidth;         // Pulse width to measure the impedance
-extern int   ChannelDischargeTime;    // Discharge time for the channel
-extern float StimulationTimePeriod; // Time period for the stimulation in ms - 1/frequency set to 60Hz by default
+typedef enum {
+    MONOPHASIC_STIMULATION = 0,
+    BIPHASIC_STIMULATION = 1,
+    IMPEDANCE_ONLY = 2
+} Mode;
 
-extern int ElectrodeNum;            // Number of currently active electrodes
+extern volatile int   Polarity;                // 1:anodic, 0:cathodic
+extern volatile Mode   StimulationMode;        // Mode of the stimulation 
+extern volatile int   PulseWidth;              // Pulse width of the stimulation 
+extern volatile int   SensePulseHeight;        // Pulse height to measure the impedance 
+extern volatile int   SensePulseWidth;         // Pulse width to measure the impedance 
+extern volatile int   ChannelDischargeTime;    // Discharge time for the channel 
+extern volatile float StimulationTimePeriod;   // Time period for the stimulation in ms - 1/frequency set to 60Hz by default 
+
+extern volatile int ElectrodeNum;              // Number of currently  active electrodes
+
+extern volatile bool SendingVoltages;          // Flag to indicate if a command is being processed
 
 /**********************************************************************/
 /*  delay_exact_us - delays the execution for a specified number of   */
@@ -50,16 +59,11 @@ void IRAM_ATTR Timer1_Stimulate_ISR();
 /**********************************************************************/
 void initEtactileKit();
 
-/**********************************************************************/
-/*  stimulate - multi-core loop running the stimualte task            */
-/**********************************************************************/
-// void stimulate(void *pvParameters);
+uint16_t IRAM_ATTR monoPhasicPulse(int stim_pulse_height, int stim_pulse_width);
 
-int monoPhasicPulse(int stim_pulse_height, int stim_pulse_width);
+uint16_t IRAM_ATTR biPhasicPulse(int height_a, int width_a, int height_b, int width_b);
 
-int biPhasicPulse(int height_a, int width_a, int height_b, int width_b);
-
-void dischargeChannel(int discharge_time);
+void IRAM_ATTR dischargeChannel(int discharge_time);
 
 /**********************************************************************/
 /*  runEtactileKit - main loop for the eTactileKit board              */

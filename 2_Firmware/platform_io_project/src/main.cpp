@@ -6,6 +6,7 @@ void setup() {
 }
 
 void loop() {
+  /*BLE and WiFi Run in Core 0 and the loop runs in Core 1*/
   runEtactileKit();
   /***********************************************/
   /*Add your code here*/ 

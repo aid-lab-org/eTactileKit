@@ -15,6 +15,6 @@ void initADC_DAC();
 /* THe SPI MOSI is connected to the DAC and MISO is from the ADC output       */
 /* This eliminates the requirement for having seperate communication channels */
 /******************************************************************************/
-int DAAD(int DA);
+uint16_t IRAM_ATTR DAAD(uint16_t DA);
 
 #endif //ADC_DAC_H
