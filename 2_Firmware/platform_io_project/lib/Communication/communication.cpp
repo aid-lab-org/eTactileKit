@@ -83,11 +83,14 @@ static void startDiscoveryResponder() {
 }
 
 void initCommunication() {
-  // Derive a stable, unique 6-hex ID from the factory eFuse MAC. It is constant across
-  // reboots and independent of STA/AP mode, and drives the hostname, AP SSID and the
-  // discovery reply so several kits on one network never collide.
-  uint32_t idNum = (uint32_t)(ESP.getEfuseMac() & 0xFFFFFF);
-  snprintf(deviceId, sizeof(deviceId), "%06X", idNum);
+  // Derive a stable, unique ID from the LAST three octets of the factory MAC. getEfuseMac()
+  // packs the MAC least-significant-octet first, so its low 24 bits are the OUI (vendor prefix)
+  // that is SHARED across boards — using them made every kit report the same ID. The upper three
+  // octets (mac[3..5], the NIC-specific part) are unique per chip and match the tail of the MAC
+  // shown in the router's client list. Constant across reboots and STA/AP mode.
+  uint64_t mac = ESP.getEfuseMac();
+  snprintf(deviceId, sizeof(deviceId), "%02X%02X%02X",
+           (uint8_t)(mac >> 24), (uint8_t)(mac >> 32), (uint8_t)(mac >> 40));
   String hostname = String(MDNS_HOSTNAME) + "-" + deviceId; // etactilekit-A1B2C3
 
   // --- Attempt Station mode first (DHCP, no static IP) ---
