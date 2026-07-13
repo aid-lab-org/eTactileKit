@@ -12,193 +12,193 @@
       "id": 0,
       "label": "E0",
       "mapping": 0,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 1,
       "label": "E1",
       "mapping": 23,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 2,
       "label": "E2",
       "mapping": 24,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 3,
       "label": "E3",
       "mapping": 15,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 4,
       "label": "E4",
       "mapping": 1,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 5,
       "label": "E5",
       "mapping": 18,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 6,
       "label": "E6",
       "mapping": 5,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 7,
       "label": "E7",
       "mapping": 10,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 8,
       "label": "E8",
       "mapping": 29,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 9,
       "label": "E9",
       "mapping": 14,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 10,
       "label": "E10",
       "mapping": 16,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 11,
       "label": "E11",
       "mapping": 3,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 12,
       "label": "E12",
       "mapping": 21,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 13,
       "label": "E13",
       "mapping": 26,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 14,
       "label": "E14",
       "mapping": 12,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 15,
       "label": "E15",
       "mapping": 31,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 16,
       "label": "E16",
       "mapping": 2,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 17,
       "label": "E17",
       "mapping": 19,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 18,
       "label": "E18",
       "mapping": 7,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 19,
       "label": "E19",
       "mapping": 8,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 20,
       "label": "E20",
       "mapping": 28,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 21,
       "label": "E21",
       "mapping": 13,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 22,
       "label": "E22",
       "mapping": 17,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 23,
       "label": "E23",
       "mapping": 4,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 24,
       "label": "E24",
       "mapping": 22,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 25,
       "label": "E25",
       "mapping": 25,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 26,
       "label": "E26",
       "mapping": 11,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 27,
       "label": "E27",
       "mapping": 30,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 28,
       "label": "E28",
       "mapping": 20,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 29,
       "label": "E29",
       "mapping": 6,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 30,
       "label": "E30",
       "mapping": 9,
-      "intensity": 300
+      "intensity": 150
     },
     {
       "id": 31,
       "label": "E31",
       "mapping": 27,
-      "intensity": 300
+      "intensity": 150
     }
   ]
 }

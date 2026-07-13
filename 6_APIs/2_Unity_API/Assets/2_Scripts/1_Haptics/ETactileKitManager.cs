@@ -15,9 +15,18 @@ using UnityEngine.Networking;
 /// electrode ids that are ON; when sent, those electrodes are driven at their calibrated intensity
 /// (all others = 0), the array is remapped to hardware channels by <see cref="ETactileKit"/>, and
 /// transmitted in one packet.
+///
+/// <see cref="AmplitudeGain"/> is a global multiplier applied to every calibrated intensity at send
+/// time (1 = as calibrated). The scaled value is rounded to the nearest integer and clamped to the
+/// hardware's 12-bit DAC range, so the per-electrode balance from calibration is preserved while the
+/// overall strength can be adjusted in one place - live, without reconnecting.
 /// </summary>
 public class ETactileKitManager : MonoBehaviour
 {
+    /// <summary>Bounds of the global amplitude gain slider.</summary>
+    public const float MinAmplitudeGain = 0f;
+    public const float MaxAmplitudeGain = 1.5f;
+
     [Header("Connection")]
     [SerializeField] private ConnectionType connectionType = ConnectionType.Serial;
     [SerializeField] private string portName = "COM12";
@@ -60,6 +69,14 @@ public class ETactileKitManager : MonoBehaviour
     [SerializeField] private string defaultCalibrationFileName = "template_32_electrode_calibration.json";
     [SerializeField] private CalibrationProfile activeProfile = new CalibrationProfile();
 
+    [Header("Amplitude")]
+    [Tooltip("Global gain applied to every electrode's calibrated intensity before it is sent to the " +
+             "hardware. 1 = use the calibration values as-is; below 1 attenuates, above 1 boosts. " +
+             "Scaled values are rounded to the nearest integer and clamped to the 12-bit DAC range. " +
+             "Takes effect immediately, including while playing.")]
+    [Range(MinAmplitudeGain, MaxAmplitudeGain)]
+    [SerializeField] private float amplitudeGain = 1f;
+
     [Header("Testing")]
     [Tooltip("Cycle all electrodes on/off after connecting, to verify the hardware link.")]
     [SerializeField] private bool runConnectionTest = false;
@@ -72,6 +89,17 @@ public class ETactileKitManager : MonoBehaviour
     public bool IsConnected => etk != null && etk.IsConnected;
     public int ElectrodeCount => activeProfile != null ? activeProfile.ElectrodeCount : 0;
     public CalibrationProfile ActiveProfile => activeProfile;
+
+    /// <summary>
+    /// Global gain applied to every electrode's calibrated intensity before it is sent (1 = as
+    /// calibrated). Clamped to [<see cref="MinAmplitudeGain"/>, <see cref="MaxAmplitudeGain"/>].
+    /// Changing it takes effect on the next frame sent - no reconnect or re-setup needed.
+    /// </summary>
+    public float AmplitudeGain
+    {
+        get => amplitudeGain;
+        set => amplitudeGain = Mathf.Clamp(value, MinAmplitudeGain, MaxAmplitudeGain);
+    }
 
     private void Start() => StartCoroutine(StartupRoutine());
 
@@ -305,9 +333,21 @@ public class ETactileKitManager : MonoBehaviour
     // Stimulation
     //--------------------------------------------------------------------------------------//
     /// <summary>
+    /// Calibrated intensity of one electrode scaled by <see cref="AmplitudeGain"/>, rounded to the
+    /// nearest integer (the hardware takes integers only) and clamped to the 12-bit DAC range.
+    /// </summary>
+    private int ScaledIntensity(int electrodeId)
+    {
+        return Mathf.Clamp(
+            Mathf.RoundToInt(cachedIntensities[electrodeId] * amplitudeGain),
+            0, ETactileKit.MaxIntensity);
+    }
+
+    /// <summary>
     /// Send a single frame. <paramref name="activeElectrodeIds"/> lists the electrode ids that are ON
-    /// this frame; each is driven at its calibrated intensity and all others are 0. Ids outside
-    /// [0, ElectrodeCount) are ignored with a warning. Returns false if not connected or testing.
+    /// this frame; each is driven at its calibrated intensity scaled by <see cref="AmplitudeGain"/>,
+    /// and all others are 0. Ids outside [0, ElectrodeCount) are ignored with a warning. Returns false
+    /// if not connected or testing.
     /// </summary>
     public bool SendFrame(int[] activeElectrodeIds)
     {
@@ -327,7 +367,7 @@ public class ETactileKitManager : MonoBehaviour
             {
                 if (id >= 0 && id < frameIntensityBuffer.Length)
                 {
-                    frameIntensityBuffer[id] = cachedIntensities[id];
+                    frameIntensityBuffer[id] = ScaledIntensity(id);
                 }
                 else
                 {
@@ -365,14 +405,19 @@ public class ETactileKitManager : MonoBehaviour
 
         int[] allOn = new int[ElectrodeCount];
         int[] allOff = new int[ElectrodeCount];
-        for (int i = 0; i < ElectrodeCount; i++)
-        {
-            allOn[i] = cachedIntensities[i];
-        }
 
         bool on = false;
         while (isTesting && IsConnected)
         {
+            if (on)
+            {
+                // Rebuilt each cycle so the amplitude slider takes effect live during the test.
+                for (int i = 0; i < ElectrodeCount; i++)
+                {
+                    allOn[i] = ScaledIntensity(i);
+                }
+            }
+
             etk.SendStimPattern(on ? allOn : allOff);
             on = !on;
             yield return new WaitForSeconds(0.5f);

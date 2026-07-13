@@ -88,6 +88,20 @@ parameter on the manager.
 - In the manager inspector, **Calibration Profile** lets you **Import JSON** / **Export JSON** (the
   same format eTactileKitExplorer produces) and tune each electrode's **Intensity** directly.
 
+### Global amplitude (gain)
+
+The manager's **Amplitude Gain** slider scales **every** electrode's calibrated intensity as it is
+sent, so you can adjust overall strength in one place while keeping the per-electrode balance from
+calibration:
+
+- Range **0 – 1.5**, default **1** (1 = use the calibration values exactly as they are).
+- The scaled value is **rounded to the nearest integer** (the hardware only takes integers) and
+  **clamped to the 12-bit DAC range** (0 – 4095), so a high calibration value with a gain above 1 can
+  never overflow.
+- It applies **live** - drag the slider while playing and the next frame uses it; no reconnect or
+  re-calibration needed. It does not modify the calibration profile itself.
+- From code: `manager.AmplitudeGain = 0.8f;` (clamped to the same range).
+
 The manager runs this one-time setup on connect (mirrors the Python reference order):
 
 ```text
@@ -210,6 +224,8 @@ active electrode range are ignored with a warning.
   left free) for ~1 s on either hand - immediately sends OFF and disconnects. The same gesture works
   on PC / Quest Link and on the standalone headset (no keyboard needed).
 - OFF is also sent automatically on disconnect, on `OnDisable`, and on application quit.
+- **Amplitude Gain** above `1` drives every electrode *harder than calibrated* — raise it slowly and
+  only if the calibrated level is too weak. `0` silences the output without disconnecting.
 
 ---
 
@@ -247,7 +263,8 @@ changes** (serial, file-based calibration and discovery re-enable themselves aut
 | Symptom | Check |
 |---|---|
 | No collisions detected at all | Finger/tool collider's Layer must match the controller's `Probe Layer` (a `Default`-layer finger with a different `Probe Layer` is never found - watch for the "found no probe colliders" warning). Object's Layer must be in `Interactable Layer`, and the two must differ. |
-| Detected but no stimulation | Penetration ≥ profile `Min Penetration Depth Meters`? Profile `Enable Haptics` on? Probe actually overlapping (not just touching) the object? Device connected and not in Run Connection Test? |
+| Detected but no stimulation | Penetration ≥ profile `Min Penetration Depth Meters`? Profile `Enable Haptics` on? Probe actually overlapping (not just touching) the object? Device connected and not in Run Connection Test? **Amplitude Gain** not 0? |
+| Stimulation too weak / too strong | Adjust the manager's **Amplitude Gain** (0–1.5, default 1) — it scales all calibrated intensities live. If only *some* electrodes feel wrong, the per-electrode balance is off: re-calibrate in eTactileKitExplorer, or tune individual **Intensity** values in the manager's calibration list. |
 | "Cannot connect without a valid calibration profile" | Assign / import a valid profile (mapping must be a permutation of `0..count-1`). |
 | WiFi: "No kits discovered" | PC and kits on the same router/subnet? Router allowing UDP broadcast (disable client/AP isolation)? Windows Firewall allowing Unity inbound UDP:8888? Did the board fall back to AP mode? (its `eTactileKit_<ID>` SSID would show in your Wi-Fi list). Manager falls back to `IP Address` when nothing answers. |
 | WiFi: connected to the wrong kit | Set `Target Device Id` to the intended board's 6-hex code (blank = first found). |
