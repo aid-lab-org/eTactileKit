@@ -10,14 +10,6 @@
 #define ETACTILEKIT_COMPACT_BOARD
 
 /************************************************************************* */
-/*Communication Type Used - Uncomment correct type                         */
-/************************************************************************* */
-#define SERIAL_COMMUNICATION
-// #define WIFI_COMMUNICATION
-// #define BLE_COMMUNICATION
-
-
-/************************************************************************* */
 /*Pin Assignment for the board used                                        */
 /************************************************************************* */
 #define SCLK                                     7 //GPIO7
@@ -37,12 +29,12 @@
 
 /************************************************************************* */
 /*Communication variables                                                  */
+/*Serial (USB) and WiFi are both available. The first host to connect owns */
+/*the board and the other link is refused until that host disconnects. The */
+/*WiFi radio is switched off while a serial host is connected.             */
 /************************************************************************* */
-#if defined(SERIAL_COMMUNICATION)
-#define BAUD_RATE 921600       //Baud rate for serial communication
-#endif
+#define SERIAL_LINK_TIMEOUT_MS 250     //Serial link closes after this many ms without host polling or data. Host APIs wait longer than this before reopening a port (Python: SERIAL_REOPEN_GAP_S); change them together
 
-#if defined(WIFI_COMMUNICATION)
 /************************************************************************* */
 /*Connect to external WiFi network (Station Mode)                          */
 /*Each board derives a unique 6-hex ID from its MAC at boot and advertises */
@@ -63,6 +55,9 @@
 #define WIFI_AP_SSID_PREFIX     "eTactileKit_" // Unique AP SSID is eTactileKit_<ID>
 #define WIFI_AP_PASS            "etactile@al"
 #define SERVER_PORT             8080           // TCP control port (all modes)
+#define WIFI_KEEPALIVE_IDLE_S   2              // Probe a silent TCP client after this many idle seconds
+#define WIFI_KEEPALIVE_INTVL_S  1              // Seconds between keepalive probes
+#define WIFI_KEEPALIVE_COUNT    3              // Unanswered probes before the client is dropped
 
 /************************************************************************* */
 /*UDP broadcast discovery                                                  */
@@ -73,8 +68,6 @@
 #define DISCOVERY_PORT          8888           // UDP port the board listens on for probes
 #define DISCOVERY_PROBE         "ETK?"         // Datagram a client broadcasts to find kits
 #define DISCOVERY_REPLY_PREFIX  "ETK!"         // Prefix of the board's unicast reply line
-
-#endif
 
 
 /************************************************************************* */
