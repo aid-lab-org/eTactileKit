@@ -33,7 +33,7 @@
 /*the board and the other link is refused until that host disconnects. The */
 /*WiFi radio is switched off while a serial host is connected.             */
 /************************************************************************* */
-#define SERIAL_LINK_TIMEOUT_MS 250     //Serial link closes after this many ms without host polling or data. Host APIs wait longer than this before reopening a port (Python: SERIAL_REOPEN_GAP_S); change them together
+#define SERIAL_LINK_TIMEOUT_MS 250     //Serial link closes after this many ms without host polling or data. Host APIs wait longer than this before reopening a port (Python: SERIAL_REOPEN_GAP_S, Unity: SerialHandler.ReopenGapMs); change them together
 
 /************************************************************************* */
 /*Connect to external WiFi network (Station Mode)                          */
@@ -62,8 +62,9 @@
 /************************************************************************* */
 /*UDP broadcast discovery                                                  */
 /*Clients broadcast DISCOVERY_PROBE to DISCOVERY_PORT; each  */
-/*board replies with a "<PREFIX>;id=..;ip=..;port=..;mode=.." line so kits   */
-/*are found by unique ID without relying on mDNS (which Unity cannot resolve)*/
+/*board replies with a "<PREFIX>;id=..;name=..;ip=..;port=..;mode=..;busy=..;fw=.." */
+/*line so kits are found by unique ID without relying on mDNS (which Unity   */
+/*cannot resolve)                                                            */
 /************************************************************************* */
 #define DISCOVERY_PORT          8888           // UDP port the board listens on for probes
 #define DISCOVERY_PROBE         "ETK?"         // Datagram a client broadcasts to find kits

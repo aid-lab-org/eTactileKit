@@ -1,5 +1,6 @@
 #include "etactilekit.h"
 #include "esp_timer.h"
+#include "hal/cpu_hal.h"
 
 /************************************************************************* */
 /*Work split between the cores                                             */
@@ -19,6 +20,17 @@
 #define COMMAND_MAX_BUSY_US    20000    // The command task sleeps a tick when it has not for this long (checked between parser steps)
 #define SCAN_HOLD_TIMEOUT_US   500000   // Longest an HV513 count request waits for the scan in progress
 #define DEFAULT_PERIOD_US      10000    // 100 Hz until the host sets a frequency
+#define MAX_PULSE_HEIGHT       4095     // DAC full scale; hosts never send a higher pulse height
+
+/************************************************************************* */
+/*Scan time limits                                                         */
+/*While a scan runs, this core serves no other interrupt, and the interrupt*/
+/*watchdog resets the chip when its tick has not run for 300 ms. The host  */
+/*APIs refuse settings whose scan would not fit in the period; these limits*/
+/*hold whatever a host sends.                                              */
+/************************************************************************* */
+#define SCAN_LIMIT_US          260000   // No electrode is started that could end later than this into a scan
+#define SCAN_GAP_US            50       // Shortest pause between the end of a scan and the start of the next
 
 // scanOwner values. The interrupt takes the scan for its duration; the command task takes it while
 // stackSense() drives the HV513 pins that a scan uses.
@@ -62,13 +74,15 @@ static volatile bool scanHoldRequest = false;   // The interrupt starts no scan 
 // Written by the interrupt, read by the command task: last ADC reading of each channel
 static volatile uint16_t voltage[MAX_ELECTRODE_NUM] = {0};
 
-static uint32_t alarmTicks = DEFAULT_PERIOD_US * 2;  // Interrupt only: period programmed into Timer1
+static uint32_t alarmTicks = DEFAULT_PERIOD_US * 2;  // Interrupt only: period programmed into Timer1's alarm; 0 while the alarm holds a one-off pause
+static uint32_t cyclesPerUs = 240;                   // CPU cycles per microsecond, set before the timer starts
 
 static void commandTask(void *);
 
 void initEtactileKit() {
+    initADC_DAC();    // First of all: the DAC keeps its last level across a reset of the microcontroller
     initSwitching();
-    initADC_DAC();
+    cyclesPerUs = getCpuFrequencyMhz();
 
     Timer0_Cfg = timerBegin(0, 40, true); // (timer id, prescaler, count up): 80 MHz / 40, 0.5 us ticks
 
@@ -143,6 +157,7 @@ void IRAM_ATTR dischargeChannel(int discharge_time) {
 
 
 void IRAM_ATTR Timer1_Stimulate_ISR() { // Timer interrupt service routine
+  const uint32_t startCycles = cpu_hal_get_cycle_count();
   timerAlarmDisable(Timer1_Cfg); // Disable the timer to prevent re-entrancy if the stimulation takes longer than the timer period
 
   // While the command task senses the HV513 stack on the same pins (and while it waits to), no
@@ -165,7 +180,15 @@ void IRAM_ATTR Timer1_Stimulate_ISR() { // Timer interrupt service routine
     const int discharge  = ChannelDischargeTime;
     const Mode mode      = StimulationMode;
 
+    // Longest one electrode can take with these settings, in CPU cycles (the estimate the host APIs
+    // use). An electrode that could end later than SCAN_LIMIT_US into the scan is not started.
+    const uint32_t width = mode == IMPEDANCE_ONLY ? sensePW : pw;
+    const uint32_t electrodeCycles =
+        ((mode == BIPHASIC_STIMULATION ? 2 : 1) * ((width > 10 ? width : 10) + 8) + discharge + 5) * cyclesPerUs;
+    const uint32_t scanLimitCycles = SCAN_LIMIT_US * cyclesPerUs;
+
     for (ch = 0; ch < n; ch++) {
+      if (cpu_hal_get_cycle_count() - startCycles + electrodeCycles > scanLimitCycles) break;
       hv513FastScan(ch);     //Select the electrode
 
       if (polarity == 0){    //Cathodic Stimulation
@@ -190,13 +213,20 @@ void IRAM_ATTR Timer1_Stimulate_ISR() { // Timer interrupt service routine
       dischargeChannel(discharge); // Discharge the channel after stimulation
     }
 
-    hv513Clear(HV513Num);  //It is to clear the HV513 outputs if any of the remaining electrodes are not stimulated.
+    hv513Clear();  //It is to clear the HV513 outputs if any of the remaining electrodes are not stimulated.
     __atomic_store_n(&scanOwner, SCAN_FREE, __ATOMIC_RELEASE);
   }
 
-  // A new period is programmed here, between scans, and counts from the start of this scan.
   const uint32_t ticks = alarmTicksPending;
-  if (ticks != alarmTicks) {
+  if ((cpu_hal_get_cycle_count() - startCycles) / cyclesPerUs + SCAN_GAP_US >= ticks / 2) {
+    // The scan ran to within SCAN_GAP_US of its period, or past it. With the alarm already due, the
+    // next scan would start at once, and back-to-back scans keep this core's tick from ever running:
+    // the alarm is set SCAN_GAP_US from now instead, and the scan it starts programs the period again.
+    // (The counter itself is left alone: writing it would also change the value it reloads.)
+    timerAlarmWrite(Timer1_Cfg, timerRead(Timer1_Cfg) + SCAN_GAP_US * 2, true);
+    alarmTicks = 0;
+  } else if (ticks != alarmTicks) {
+    // A new period is programmed here, between scans, and counts from the start of this scan.
     alarmTicks = ticks;
     timerAlarmWrite(Timer1_Cfg, ticks, true);
   }
@@ -223,6 +253,15 @@ static void stopStimulation() {
 }
 
 
+// The host's byte stream can no longer be trusted: it carried a value no host API sends or an unknown
+// command, or a payload never completed. What follows could be parsed as anything, so stimulation
+// stops and the host's session ends; it has to connect again. One copy for its three callers.
+static void __attribute__((noinline)) dropHost() {
+    stopStimulation();
+    rejectHost();
+}
+
+
 // One parser step: handles at most one command. Returns true if it did any work or serial data is
 // still arriving, so the task polls again at once instead of sleeping.
 static bool processCommands() {
@@ -236,11 +275,16 @@ static bool processCommands() {
     //   parser restarts on a command boundary, so a dropped host can never
     //   leave electrodes stimulating or half a command pending. A serial port
     //   reopened within SERIAL_LINK_TIMEOUT_MS counts as the same connection.
+    //4. The protocol has no checksum, so anything no host API sends (an
+    //   unknown command, a setting outside its range, a pulse height above
+    //   the DAC range, a payload that never completes) is taken as a byte
+    //   stream that is out of step: see dropHost().
     static bool processingCommand = false; // Tracks if we are waiting for a command payload
     static int requiredBytes = 0;          // Payload size of the pending command
     static byte currentCommand = 0;        // The pending command
     static int64_t commandStartUs = 0;     // When the pending command byte arrived
     static uint32_t knownLinkGeneration = 0; // linkGeneration the parser state belongs to
+    static uint16_t patternIn[MAX_ELECTRODE_NUM]; // A received pattern, until all of it has been checked
 
     bool madeProgress = false; // True if any bytes were consumed this call
 
@@ -306,8 +350,8 @@ static bool processCommands() {
                 writeInt_8((byte)ElectrodeNum);
                 return true;
             default:
-                // Unknown command, ignore
-                currentCommand = 0;
+                // Not a command
+                dropHost();
                 return true;
             }
         commandStartUs = esp_timer_get_time();
@@ -317,21 +361,30 @@ static bool processCommands() {
     if (processingCommand) {
         if (isDataAvailable() >= requiredBytes) {
             int rcv;
+            bool valid = true;  // False if the payload holds a value no host API sends
             switch (currentCommand) {
                 case PC_ESP32_STIM_MODE:
                     rcv = readInt_8();
-                    StimulationMode = (Mode)constrain(rcv, 0, 2);
+                    valid = rcv <= IMPEDANCE_ONLY;
+                    if (valid) StimulationMode = (Mode)rcv;
                     break;
                 case PC_ESP32_STIM_PATTERN:
+                    // Applied only if every pulse height is within the DAC range
                     for (int i = 0; i < requiredBytes / 2; i++) {
-                        rcv = readInt_16();
-                        stimHeight[i] = constrain(rcv, 0, 4095); //All the 12 bits of the DAC are used for the pulse height. The constrain function can be used to limit the maximum pulse height.
+                        patternIn[i] = readInt_16();
+                        if (patternIn[i] > MAX_PULSE_HEIGHT) valid = false;
                     }
-                    publishPattern();
+                    if (valid) {
+                        for (int i = 0; i < requiredBytes / 2; i++) {
+                            stimHeight[i] = patternIn[i]; //All the 12 bits of the DAC are used for the pulse height. constrain() can be used here to limit the maximum pulse height.
+                        }
+                        publishPattern();
+                    }
                     break;
                 case PC_ESP32_STIMULATION_POLARITY:
                     rcv = readInt_8();
-                    PolarityPending = constrain(rcv, 0, 1); //Polarity (1 - anodic or 0 - cathodic)
+                    valid = rcv <= 1; //Polarity (1 - anodic or 0 - cathodic)
+                    if (valid) PolarityPending = rcv;
                     break;
                 case PC_ESP32_STIMULATION_PULSE_WIDTH:
                     PulseWidth = readInt_16();
@@ -347,9 +400,8 @@ static bool processCommands() {
                     break;
                 case PC_ESP32_STIMULATION_FREQUENCY:
                     rcv = readInt_16();
-                    if (rcv != 0) {
-                        setPeriodUs(1000000 / rcv); //convert the frequency to time period in us
-                    }
+                    valid = rcv != 0; //Hosts send 1-65535 Hz
+                    if (valid) setPeriodUs(1000000 / rcv); //convert the frequency to time period in us
                     break;
                 case PC_ESP32_ELECTRODE_NUM: {
                     rcv = readInt_8();
@@ -368,13 +420,13 @@ static bool processCommands() {
             processingCommand = false; // Command processing complete
             currentCommand = 0;
             madeProgress = true;
+            if (!valid) dropHost();
         } else if (esp_timer_get_time() - commandStartUs > COMMAND_TIMEOUT_US) {
-            // Payload never completed (PC disconnected / bytes dropped mid-command).
-            // Abort and discard the partial payload so it is not misparsed as
-            // new command bytes — otherwise the parser stays desynced forever.
-            while (isDataAvailable() > 0) { readInt_8(); }
+            // Payload never completed (PC disconnected / bytes dropped mid-command). Whatever
+            // arrives later would be parsed from the middle of that command.
             processingCommand = false;
             currentCommand = 0;
+            dropHost();
         }
     }
 

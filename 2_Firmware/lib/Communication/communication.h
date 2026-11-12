@@ -62,6 +62,14 @@ void sampleHostPresence();
 bool waitForHostData();
 
 /************************************************************************* */
+/*End the session of a host whose byte stream can no longer be trusted. A  */
+/*TCP client is disconnected. A serial host is refused until it reopens    */
+/*its port, and the USB port is enumerated again so that its open handle   */
+/*fails instead of its writes being accepted and discarded.                */
+/************************************************************************* */
+void rejectHost();
+
+/************************************************************************* */
 /*Check if data is available                                               */
 /************************************************************************* */
 int isDataAvailable();

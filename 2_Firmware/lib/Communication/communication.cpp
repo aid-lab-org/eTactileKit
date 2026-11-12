@@ -7,6 +7,10 @@
 #include "esp_timer.h"
 #include "soc/periph_defs.h"
 #include "lwip/sockets.h"
+#include "lwip/etharp.h"
+#include "lwip/prot/iana.h"
+#include "lwip/ip4.h"
+#include "lwip/priv/tcpip_priv.h"
 #include "hal/usb_serial_jtag_ll.h"
 
 #if !ARDUINO_USB_MODE
@@ -14,6 +18,7 @@
 #endif
 
 #define WIFI_POLL_MS 10  // How often the command task checks for a new TCP client or a dropped one
+#define WIFI_TX_TIMEOUT_US 250000  // A reply the TCP client has not taken by then ends its session
 
 extern "C" bool g_usb_print;  // ESP32-S3 ROM: ROM printf also writes to the USB-Serial-JTAG endpoint
 
@@ -36,7 +41,7 @@ static uint32_t serialRxHead = 0;      // Free-running write index into serialRx
 static uint32_t serialRxTail = 0;      // Free-running read index into serialRx
 static int64_t serialTxOkUs = 0;       // Last time the endpoint FIFO had room for a packet
 static bool serialOpen = false;        // A host has the serial port open
-static bool serialRefused = false;     // The open port was refused because WiFi owned the board
+static bool serialRefused = false;     // The open port gets no answers: WiFi owned the board, or its host was rejected
 static TickType_t serialSeenTick = 0;  // Last time the host polled the port or sent data
 static TaskHandle_t serialWaiter = NULL;  // Task woken by serialRxIsr (the task that ran initCommunication)
 
@@ -49,9 +54,9 @@ static void IRAM_ATTR serialRxIsr(void *) {
   if (woken) portYIELD_FROM_ISR();
 }
 
-// Forces the host to enumerate the port again, so a host that was mid-command when the board
-// restarted has to reopen it and the parser starts on a command boundary.
-static void initSerial() {
+// Forces the host to enumerate the port again, so a host that had the port open (mid-command when
+// the board restarted, or rejected) has to reopen it and the parser starts on a command boundary.
+static void reenumerateSerial() {
   usb_serial_jtag_ll_disable_intr_mask(USB_SERIAL_JTAG_LL_INTR_MASK);
   pinMode(USB_DM_GPIO_NUM, OUTPUT_OPEN_DRAIN);
   pinMode(USB_DP_GPIO_NUM, OUTPUT_OPEN_DRAIN);
@@ -163,6 +168,39 @@ static void startMdns() {
   }
 }
 
+// A discovery reply goes to the hardware address of the host that sent the probe. The network stack
+// learns such an address only from its own ARP request, and some networks do not carry that request
+// from one wireless client to another: the reply would be dropped on the board. The probe's frame
+// already holds the address, so it is handed to the stack in the form of the ARP reply.
+struct ProbeSender {
+  struct tcpip_api_call_data call;  // First member: the stack passes this back to learnProbeSender
+  ip4_addr_t ip;
+  struct eth_addr mac;
+};
+
+// Runs in the network stack's context.
+static err_t learnProbeSender(struct tcpip_api_call_data *call) {
+  const ProbeSender *sender = (const ProbeSender *)call;
+  struct netif *netif = ip4_route(&sender->ip);
+  if (netif == NULL || !ip4_addr_netcmp(&sender->ip, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
+    return ERR_OK;  // Not on this network: the reply goes through the gateway
+  }
+  struct pbuf *p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_HDR, PBUF_RAM);
+  if (p == NULL) return ERR_MEM;
+  struct etharp_hdr *arp = (struct etharp_hdr *)p->payload;
+  arp->hwtype = PP_HTONS(LWIP_IANA_HWTYPE_ETHERNET);
+  arp->proto = PP_HTONS(ETHTYPE_IP);
+  arp->hwlen = ETH_HWADDR_LEN;
+  arp->protolen = sizeof(ip4_addr_t);
+  arp->opcode = PP_HTONS(ARP_REPLY);
+  memcpy(&arp->shwaddr, &sender->mac, ETH_HWADDR_LEN);
+  memcpy(&arp->sipaddr, &sender->ip, sizeof(ip4_addr_t));
+  memcpy(&arp->dhwaddr, netif->hwaddr, ETH_HWADDR_LEN);
+  memcpy(&arp->dipaddr, netif_ip4_addr(netif), sizeof(ip4_addr_t));
+  etharp_input(p, netif);  // Takes the buffer
+  return ERR_OK;
+}
+
 // Listen for UDP discovery probes and reply (unicast) with this board's identity + IP.
 // The onPacket callback runs on the async UDP task, so it adds no work to the command task and
 // cannot delay the stimulation interrupt. It only fires when a probe arrives.
@@ -171,10 +209,16 @@ static void startDiscoveryResponder() {
     discoveryUdp.onPacket([](AsyncUDPPacket &packet) {
       // Only answer genuine probes; ignore anything else that lands on this port.
       if (packet.length() >= 4 && memcmp(packet.data(), DISCOVERY_PROBE, 4) == 0) {
+        if (!packet.isIPv6()) {
+          ProbeSender sender;
+          sender.ip.addr = (uint32_t)packet.remoteIP();
+          packet.remoteMac(sender.mac.addr);
+          tcpip_api_call(learnProbeSender, &sender.call);
+        }
         IPAddress ip = wifiSTAMode ? WiFi.localIP() : WiFi.softAPIP();
         // ;-separated key=value line, parsed identically by the Python and Unity clients.
-        // busy=1 means another WiFi client currently owns the board.
-        packet.printf("%s;id=%s;name=%s-%s;ip=%s;port=%d;mode=%s;busy=%d;fw=1.0",
+        // busy=1 means a host owns the board.
+        packet.printf("%s;id=%s;name=%s-%s;ip=%s;port=%d;mode=%s;busy=%d;fw=1.1",
                       DISCOVERY_REPLY_PREFIX, deviceId,
                       MDNS_HOSTNAME, deviceId,
                       ip.toString().c_str(), SERVER_PORT,
@@ -293,6 +337,15 @@ static void closeLink() {
   linkGeneration++;
 }
 
+void rejectHost() {
+  const bool serial = activeLink == LINK_SERIAL;
+  closeLink();
+  if (serial) {
+    serialRefused = true;  // Until the port has been quiet for SERIAL_LINK_TIMEOUT_MS
+    reenumerateSerial();
+  }
+}
+
 static void acceptWifiClient() {
   client = server.available();
   if (!client) return;
@@ -314,15 +367,15 @@ void initCommunication() {
   // in-interrupt error logs) is routed to UART0 only.
   esp_log_level_set("*", ESP_LOG_NONE);
   g_usb_print = false;
-  initSerial();
+  reenumerateSerial();
   serialWaiter = xTaskGetCurrentTaskHandle();
   esp_intr_alloc(ETS_USB_SERIAL_JTAG_INTR_SOURCE, 0, serialRxIsr, NULL, NULL);  // On the calling core
 
   // Derive a stable, unique ID from the LAST three octets of the factory MAC. getEfuseMac()
   // packs the MAC least-significant-octet first, so its low 24 bits are the OUI (vendor prefix)
-  // that is SHARED across boards — using them made every kit report the same ID. The upper three
-  // octets (mac[3..5], the NIC-specific part) are unique per chip and match the tail of the MAC
-  // shown in the router's client list. Constant across reboots and STA/AP mode.
+  // that is SHARED across boards. The upper three octets (mac[3..5], the NIC-specific part) are
+  // unique per chip and match the tail of the MAC shown in the router's client list. Constant
+  // across reboots and STA/AP mode.
   uint64_t mac = ESP.getEfuseMac();
   snprintf(deviceId, sizeof(deviceId), "%02X%02X%02X",
            (uint8_t)(mac >> 24), (uint8_t)(mac >> 32), (uint8_t)(mac >> 40));
@@ -419,10 +472,29 @@ uint16_t readInt_16() {
   return (uint16_t)(low | (readInt_8() << 8)); // Low byte first
 }
 
+// Queues a reply for the TCP client without blocking the command task. A client that does not take
+// it within WIFI_TX_TIMEOUT_US (it has stopped reading, or the connection has failed) is
+// disconnected: a reply cut short would leave its stream out of step.
+static void wifiWrite(const byte* data, size_t len) {
+  const int64_t startUs = esp_timer_get_time();
+  while (len > 0) {
+    const int sent = send(client.fd(), data, len, MSG_DONTWAIT);
+    if (sent > 0) {
+      data += sent;
+      len -= sent;
+      continue;
+    }
+    if (errno != EAGAIN && errno != EWOULDBLOCK) break;  // The connection has failed
+    if (esp_timer_get_time() - startUs >= WIFI_TX_TIMEOUT_US) break;
+    vTaskDelay(1);
+  }
+  if (len > 0) closeLink();
+}
+
 void writeBytes(const byte* data, size_t len) {
   switch (activeLink) {
     case LINK_SERIAL: serialWrite(data, len); break;
-    case LINK_WIFI:   client.write(data, len); break;
+    case LINK_WIFI:   wifiWrite(data, len); break;
     default:          break;
   }
 }

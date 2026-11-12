@@ -5,8 +5,9 @@
 #include "configuration.h"
 
 #define HV513_PIN_NUM 8 //Number of pins in a HV513 module
+#define HV513_MAX_NUM 255 //Largest chip count the one-byte reply to the host can carry
 
-extern int HV513Num; // Number of HV513 modules used(minimum should be 1 because the onboard HV513) - determined by stackSense()
+extern int HV513Num; // Number of HV513 chips detected by stackSense() and reported to the host
 
 /******************************************************************************/
 /*  Initialize the switching board                                            */
@@ -23,14 +24,15 @@ void IRAM_ATTR hv513FastScan(int usWhichPin);
 
 /******************************************************************************/
 /*  HV513 Clear                                                               */
+/*  Deselects every output of the chain                                       */
 /******************************************************************************/
-void IRAM_ATTR hv513Clear(int hv513_num);
+void IRAM_ATTR hv513Clear();
 
 /******************************************************************************/
 /* HV513 init                                                                 */
 /* Turn off all the HV513-outputs                                             */
 /******************************************************************************/
-void hv513Init(int hv513_num);
+void hv513Init();
 
 /**********************************************************************/
 /*  stackSense - detects the number of stacked swtiching boards       */
